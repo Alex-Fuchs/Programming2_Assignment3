@@ -1,8 +1,10 @@
 package de.uni_passau.fim.prog2.view;
 
+import de.uni_passau.fim.prog2.model.GuiToModel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.*;
 
 class Menu extends JPanel {
 
@@ -13,29 +15,13 @@ class Menu extends JPanel {
 
         setLayout(new GridLayout(1, numberOfMenuItems, horizontalGap, 0));
         setBorder(new EmptyBorder(verticalGap, 0, verticalGap, 0));
-        createMenuItems();
+        addMenuItems();
     }
 
-    private void createMenuItems() {
+    private void addMenuItems() {
         add(createScoreJLabel(Color.BLUE));
-
-        Integer[] itemsOfJComboBox = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        JComboBox jComboBox = new JComboBox<>(itemsOfJComboBox);
-        jComboBox.setSelectedItem(3);
-        add(jComboBox);
-
-        JButton createNewGame = new JButton("<HTML><U>N</U>ew</HTML>");
-        add(createNewGame);
-
-        JButton switchPlayerOrder = new JButton("<HTML><U>S</U>witch</HTML>");
-        add(switchPlayerOrder);
-
-        JButton undo = new JButton("<HTML><U>U</U>ndo</HTML>");
-        add(undo);
-
-        JButton quit = new JButton("<HTML><U>Q</U>uit</HTML>");
-        add(quit);
-
+        addComboBox();
+        addButtons();
         add(createScoreJLabel(Color.RED));
     }
 
@@ -47,6 +33,61 @@ class Menu extends JPanel {
         jLabel.setForeground(fontColour);
         jLabel.setFont(scoreFont);
         return jLabel;
+    }
+
+    private void addComboBox() {
+        Integer[] itemsOfJComboBox = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        JComboBox jComboBox = new JComboBox<>(itemsOfJComboBox);
+        jComboBox.setSelectedItem(3);
+        jComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                GuiToModel.setLevel((int) jComboBox.getSelectedItem());
+            }
+        });
+        add(jComboBox);
+    }
+
+    private void addButtons() {
+        JButton createNewGame = new JButton("<HTML><U>N</U>ew</HTML>");
+        createNewGame.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                GuiToModel.createNewBoard();
+                //Neu zeichen
+            }
+        });
+        add(createNewGame);
+
+        JButton switchPlayerOrder = new JButton("<HTML><U>S</U>witch</HTML>");
+        switchPlayerOrder.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                GuiToModel.switchPlayerOrder();
+                //Neu zeichnen
+            }
+        });
+        add(switchPlayerOrder);
+
+        JButton undo = new JButton("<HTML><U>U</U>ndo</HTML>");
+        undo.setEnabled(false);
+        undo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //todo
+            }
+        });
+        add(undo);
+
+        JButton quit = new JButton("<HTML><U>Q</U>uit</HTML>");
+        quit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Frame gui = (Frame) quit.getTopLevelAncestor();
+                gui.dispose();
+            }
+        });
+        add(quit);
     }
 
 }

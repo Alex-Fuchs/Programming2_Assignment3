@@ -9,12 +9,9 @@ class GameBoard extends JPanel {
 
     GameBoard() {
         GridBagLayout gridBagLayout = new GridBagLayout();
+        gridBagLayout.columnWeights = new double[] {0.0, 1.0};
+        gridBagLayout.rowWeights = new double[] {0.0, 1.0};
         setLayout(gridBagLayout);
-
-        gridBagLayout.columnWidths = new int[] {0, 0, 0};
-        gridBagLayout.rowHeights = new int[] {0, 0, 0};
-        gridBagLayout.columnWeights = new double[] {0.0, 1.0, 1.0E-4};
-        gridBagLayout.rowWeights = new double[] {0.0, 1.0, 1.0E-4};
 
         addHorizontalIndexes();
         addVerticalIndexes();
@@ -22,40 +19,46 @@ class GameBoard extends JPanel {
     }
 
     private void addFields() {
+        final int rightBorder = 8;
+
         JPanel fields = new JPanel();
         fields.setLayout(new GridLayout(Board.SIZE, Board.SIZE));
-
-        for (int i = 0; i < Board.SIZE; i++) {
-            for (int u = 0; u < Board.SIZE; u++) {
-                fields.add(new Field());
+        for (int i = 1; i <= Board.SIZE; i++) {
+            for (int u = 1; u <= Board.SIZE; u++) {
+                fields.add(new Field(i, u));
             }
         }
 
-        int[] parameters = {1, 1, 0, 0, 0, 8};
+        int[] parameters = {1, 1, 0, 0, 0, rightBorder};
         add(fields, createGridBagConstraints(parameters));
     }
 
     private void addVerticalIndexes() {
+        final int rightBorder = 5;
+        final int leftBorder = 7;
+
         JPanel verticalIndexes = new JPanel();
         verticalIndexes.setLayout(new GridLayout(Board.SIZE, 1));
-
         for (int i = 1; i <= Board.SIZE; i++) {
             verticalIndexes.add(createIndexJLabel(String.valueOf(i)));
         }
 
-        int[] parameters = {0, 1, 0, 7, 0, 5};
+        int[] parameters = {0, 1, 0, leftBorder, 0, rightBorder};
         add(verticalIndexes, createGridBagConstraints(parameters));
     }
 
     private void addHorizontalIndexes() {
+        final int rightBorder = 8;
+        final int topBorder = 3;
+        final int bottomBorder = 3;
+
         JPanel horizontalIndexes = new JPanel();
         horizontalIndexes.setLayout(new GridLayout(1, Board.SIZE));
-
         for (int i = 1; i <= Board.SIZE; i++) {
             horizontalIndexes.add(createIndexJLabel(String.valueOf(i)));
         }
 
-        int[] parameters = {1, 0, 3, 0, 3, 8};
+        int[] parameters = {1, 0, topBorder, 0, bottomBorder, rightBorder};
         add(horizontalIndexes, createGridBagConstraints(parameters));
     }
 
