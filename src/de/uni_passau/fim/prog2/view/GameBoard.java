@@ -1,36 +1,81 @@
 package de.uni_passau.fim.prog2.view;
 
+import de.uni_passau.fim.prog2.model.GuiToModel;
 import de.uni_passau.fim.prog2.model.Board;
+import de.uni_passau.fim.prog2.model.Player;
 
 import javax.swing.*;
 import java.awt.*;
 
 class GameBoard extends JPanel {
 
-    GameBoard() {
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        gridBagLayout.columnWeights = new double[] {0.0, 1.0};
-        gridBagLayout.rowWeights = new double[] {0.0, 1.0};
-        setLayout(gridBagLayout);
+    private static final Color human = Color.BLUE;
 
-        addHorizontalIndexes();
-        addVerticalIndexes();
-        addFields();
+    private static final Color machine = Color.RED;
+
+    private ReversiGui parent;
+
+    private Field[][] fields;
+
+    GameBoard(ReversiGui parent) {
+        if (parent != null) {
+            this.parent = parent;
+            GridBagLayout gridBagLayout = new GridBagLayout();
+            gridBagLayout.columnWeights = new double[]{0.0, 1.0};
+            gridBagLayout.rowWeights = new double[]{0.0, 1.0};
+            setLayout(gridBagLayout);
+
+            addHorizontalIndexes();
+            addVerticalIndexes();
+            addFields();
+        } else {
+            throw new IllegalArgumentException("Parent cannot be undefined!");
+        }
+    }
+
+    void updateGameBoard() {
+        Player[][] visualisation = GuiToModel.getVisualisation();
+        for (int i = 0; i < Board.SIZE; i++) {
+            for (int u = 0; u < Board.SIZE; u++) {
+                Player playerOfSlot = visualisation[i][u];
+
+                if (playerOfSlot == Player.HUMAN) {
+                    fields[i][u].setStone(human);
+                } else if (playerOfSlot == Player.MACHINE) {
+                    fields[i][u].setStone(machine);
+                } else {
+                    fields[i][u].setStone(null);
+                }
+            }
+        }
+    }
+
+    void updateMenu() {
+        if (parent != null) {
+            Menu menu = parent.getMenu();
+            menu.updateScores();
+            menu.updateUndo();
+        } else {
+            throw new IllegalStateException("Cannot be done at building Gui");
+        }
     }
 
     private void addFields() {
         final int rightBorder = 8;
+        fields = new Field[Board.SIZE][Board.SIZE];
+        JPanel board = new JPanel();
 
-        JPanel fields = new JPanel();
-        fields.setLayout(new GridLayout(Board.SIZE, Board.SIZE));
-        for (int i = 1; i <= Board.SIZE; i++) {
-            for (int u = 1; u <= Board.SIZE; u++) {
-                fields.add(new Field(i, u));
+        board.setLayout(new GridLayout(Board.SIZE, Board.SIZE));
+        for (int i = 0; i < Board.SIZE; i++) {
+            for (int u = 0; u < Board.SIZE; u++) {
+                fields[i][u] = new Field(i + 1, u + 1, this);
+                board.add(fields[i][u]);
             }
         }
 
+        initializeFields();
         int[] parameters = {1, 1, 0, 0, 0, rightBorder};
-        add(fields, createGridBagConstraints(parameters));
+        add(board, createGridBagConstraints(parameters));
     }
 
     private void addVerticalIndexes() {
@@ -82,5 +127,14 @@ class GameBoard extends JPanel {
         gridBagConstraints.insets = new Insets(parameters[2], parameters[3],
                 parameters[4], parameters[5]);
         return gridBagConstraints;
+    }
+
+    private void initializeFields() {
+        int median = Board.SIZE / 2 - 1;
+
+        fields[median][median].setStone(machine);
+        fields[median][median + 1].setStone(human);
+        fields[median + 1][median].setStone(human);
+        fields[median + 1][median + 1].setStone(machine);
     }
 }
