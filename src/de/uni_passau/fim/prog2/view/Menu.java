@@ -23,32 +23,39 @@ class Menu extends JPanel {
         final int numberOfMenuItems = 7;
         final int horizontalGap = 5;
         final int verticalGap = 5;
-        this.parent = parent;
 
+        this.parent = parent;
+        setFocusable(true);
         setLayout(new GridLayout(1, numberOfMenuItems, horizontalGap, 0));
         setBorder(new EmptyBorder(verticalGap, 0, verticalGap, 0));
         addMenuItems();
+        addKeyShortCuts();
     }
 
-    void updateScores() {
+    void updateMenu() {
+        updateUndo();
+        updateScores();
+    }
+
+    private void updateScores() {
         humanScore.setText(String.valueOf(GuiToModel.getNumberOfHumanTiles()));
         machineScore.setText(String.valueOf(GuiToModel.getNumberOfMachineTiles()));
     }
 
-    void updateUndo() {
+    private void updateUndo() {
         if (GuiToModel.undoIsPossible()) {
             undo.setEnabled(true);
+        } else {
+            undo.setEnabled(false);
         }
     }
 
     private void addMenuItems() {
-        humanScore = createScoreJLabel(Color.BLUE);
+        humanScore = createScoreJLabel(ReversiGui.HUMAN_COLOR);
         add(humanScore);
-
         addComboBox();
         addButtons();
-
-        machineScore = createScoreJLabel(Color.RED);
+        machineScore = createScoreJLabel(ReversiGui.MACHINE_COLOR);
         add(machineScore);
     }
 
@@ -84,8 +91,8 @@ class Menu extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 GuiToModel.createNewBoard();
+                updateMenu();
                 parent.getGameBoard().updateGameBoard();
-                updateScores();
             }
         });
         add(createNewGame);
@@ -95,8 +102,8 @@ class Menu extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 GuiToModel.switchPlayerOrder();
+                updateMenu();
                 parent.getGameBoard().updateGameBoard();
-                updateScores();
             }
         });
         add(switchPlayerOrder);
@@ -108,11 +115,8 @@ class Menu extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (GuiToModel.undoIsPossible()) {
                     GuiToModel.undo();
-                    if (!GuiToModel.undoIsPossible()) {
-                        undo.setEnabled(false);
-                    }
+                    updateMenu();
                     parent.getGameBoard().updateGameBoard();
-                    updateScores();
                 } else {
                     throw new IllegalStateException("Undo should be disabled!");
                 }
@@ -125,10 +129,43 @@ class Menu extends JPanel {
         quit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Frame gui = (Frame) quit.getTopLevelAncestor();
-                gui.dispose();
+                parent.dispose();
             }
         });
         add(quit);
+    }
+
+    private void addKeyShortCuts() {
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+                if (e.isAltDown()) {
+                    switch (e.getKeyChar()) {
+                        case 'n':
+                            GuiToModel.createNewBoard();
+                            updateMenu();
+                            parent.getGameBoard().updateGameBoard();
+                            break;
+                        case 's':
+                            GuiToModel.switchPlayerOrder();
+                            updateMenu();
+                            parent.getGameBoard().updateGameBoard();
+                            break;
+                        case 'u':
+                            if (GuiToModel.undoIsPossible()) {
+                                GuiToModel.undo();
+                                updateMenu();
+                                parent.getGameBoard().updateGameBoard();
+                            }
+                            break;
+                        case 'q':
+                            parent.dispose();
+                            break;
+                    }
+
+                }
+            }
+        });
     }
 }

@@ -1,6 +1,7 @@
 package de.uni_passau.fim.prog2.view;
 
 import de.uni_passau.fim.prog2.model.GuiToModel;
+import de.uni_passau.fim.prog2.model.Player;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,8 +22,18 @@ class Field extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                 if (GuiToModel.move(row, col)) {
-                    parent.updateGameBoard();
-                    parent.updateMenu();
+                    parent.update();
+                    if (!checkGameOver() && !checkMissTurn(Player.HUMAN)) {
+                        GuiToModel.machineMove();
+                        parent.update();
+                        while (!checkGameOver()
+                                && checkMissTurn(Player.MACHINE)) {
+                            GuiToModel.machineMove();
+                            parent.update();
+                        }
+                    }
+                } else {
+                    showJOptionPane("Invalid Move or game over or machine turn!");
                 }
             }
         });
@@ -60,5 +71,40 @@ class Field extends JPanel {
         graphics.fillOval(borderOfStone, borderOfStone,
                 getWidth() - borderOfStone * 2,
                 getHeight() - borderOfStone * 2);
+    }
+
+    private boolean checkMissTurn(Player lastMovingPlayer) {
+        assert lastMovingPlayer != null : "Last player cannot be undefined!";
+
+        if (GuiToModel.next() == lastMovingPlayer) {
+            if (lastMovingPlayer == Player.HUMAN) {
+                showJOptionPane("Machine has to miss a turn!");
+            } else {
+                showJOptionPane("Human has to miss a turn!");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean checkGameOver() {
+        if (GuiToModel.gameOver()) {
+            Player winner = GuiToModel.getWinner();
+
+            if (winner == Player.MACHINE) {
+                showJOptionPane("The bot has won");
+            } else if (winner == Player.HUMAN) {
+                showJOptionPane("The human has Won!");
+            } else {
+                showJOptionPane("Tie Game");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void showJOptionPane(String message) {
+        JOptionPane.showMessageDialog(null, message,
+                "Message", JOptionPane.INFORMATION_MESSAGE);
     }
 }

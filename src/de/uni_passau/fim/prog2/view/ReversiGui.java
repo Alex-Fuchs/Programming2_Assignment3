@@ -5,6 +5,10 @@ import java.awt.*;
 
 class ReversiGui extends JFrame {
 
+    static final Color HUMAN_COLOR = Color.BLUE;
+
+    static final Color MACHINE_COLOR = Color.RED;
+
     private Menu menu;
 
     private GameBoard gameBoard;
@@ -34,7 +38,6 @@ class ReversiGui extends JFrame {
 
         gameBoard = new GameBoard(this);
         menu = new Menu(this);
-
         contentPane.add(gameBoard, BorderLayout.CENTER);
         contentPane.add(menu, BorderLayout.SOUTH);
     }

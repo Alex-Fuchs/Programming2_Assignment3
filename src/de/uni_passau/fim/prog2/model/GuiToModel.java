@@ -25,7 +25,6 @@ public class GuiToModel {
                 Board move = top.move(row, col);
                 if (move != null) {
                     boards.push(move);
-                    machineMove();
                     return true;
                 }
             }
@@ -35,7 +34,7 @@ public class GuiToModel {
         }
     }
 
-    private static void machineMove() {
+    public static void machineMove() {
         assert boards.peek() != null : "Illegal State";
 
         Board top = boards.peek();
@@ -43,7 +42,6 @@ public class GuiToModel {
             if (top.next() == Player.MACHINE) {
                 Board move = top.machineMove();
                 boards.push(move);
-                machineMove();
             }
         }
     }
