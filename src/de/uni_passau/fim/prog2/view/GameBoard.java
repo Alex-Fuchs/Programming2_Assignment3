@@ -1,22 +1,25 @@
 package de.uni_passau.fim.prog2.view;
 
-import de.uni_passau.fim.prog2.model.GuiToModel;
+import de.uni_passau.fim.prog2.model.DisplayData;
 import de.uni_passau.fim.prog2.model.Board;
 import de.uni_passau.fim.prog2.model.Player;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Font;
+import java.awt.Insets;
 
 class GameBoard extends JPanel {
 
-    private ReversiGui parent;
-
     private Field[][] fields;
 
-    GameBoard(ReversiGui parent) {
-        assert parent != null : "Parent cannot be undefined!";
+    GameBoard(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
 
-        this.parent = parent;
         GridBagLayout gridBagLayout = new GridBagLayout();
         gridBagLayout.columnWeights = new double[]{0.0, 1.0};
         gridBagLayout.rowWeights = new double[]{0.0, 1.0};
@@ -24,45 +27,24 @@ class GameBoard extends JPanel {
 
         addHorizontalIndexes();
         addVerticalIndexes();
-        addFields();
+        addFields(displayData);
     }
 
-    void updateGameBoard() {
-        Player[][] visualisation = GuiToModel.getVisualisation();
+    private void addFields(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
 
-        for (int i = 0; i < Board.SIZE; i++) {
-            for (int u = 0; u < Board.SIZE; u++) {
-                Player playerOfSlot = visualisation[i][u];
-
-                if (playerOfSlot == Player.HUMAN) {
-                    fields[i][u].setStone(ReversiGui.HUMAN_COLOR);
-                } else if (playerOfSlot == Player.MACHINE) {
-                    fields[i][u].setStone(ReversiGui.MACHINE_COLOR);
-                } else {
-                    fields[i][u].setStone(null);
-                }
-            }
-        }
-    }
-
-    void update() {
-        updateGameBoard();
-        parent.getMenu().updateMenu();
-    }
-
-    private void addFields() {
         final int rightBorder = 8;
         JPanel gameBoard = new JPanel();
         fields = new Field[Board.SIZE][Board.SIZE];
         gameBoard.setLayout(new GridLayout(Board.SIZE, Board.SIZE));
         for (int i = 0; i < Board.SIZE; i++) {
             for (int u = 0; u < Board.SIZE; u++) {
-                fields[i][u] = new Field(i + 1, u + 1, this);
+                fields[i][u] = new Field(i + 1, u + 1, displayData);
                 gameBoard.add(fields[i][u]);
             }
         }
-
         initializeFields();
+
         int[] parameters = {1, 1, 0, 0, 0, rightBorder};
         add(gameBoard, createGridBagConstraints(parameters));
     }
@@ -95,7 +77,7 @@ class GameBoard extends JPanel {
     }
 
     private JLabel createIndexJLabel(String text) {
-        assert text != null : "Text cannot be undefined!";
+        assert text != null : "Text cannot be null!";
 
         final Font scoreFont = new Font(null, Font.BOLD, 12);
         JLabel jLabel = new JLabel(text);
@@ -119,9 +101,9 @@ class GameBoard extends JPanel {
     private void initializeFields() {
         int median = Board.SIZE / 2 - 1;
 
-        fields[median][median].setStone(ReversiGui.MACHINE_COLOR);
-        fields[median][median + 1].setStone(ReversiGui.HUMAN_COLOR);
-        fields[median + 1][median].setStone(ReversiGui.HUMAN_COLOR);
-        fields[median + 1][median + 1].setStone(ReversiGui.MACHINE_COLOR);
+        fields[median][median].initialize(Player.MACHINE);
+        fields[median][median + 1].initialize(Player.HUMAN);
+        fields[median + 1][median].initialize(Player.HUMAN);
+        fields[median + 1][median + 1].initialize(Player.MACHINE);
     }
 }

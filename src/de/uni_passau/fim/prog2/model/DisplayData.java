@@ -1,30 +1,34 @@
 package de.uni_passau.fim.prog2.model;
 
+import de.uni_passau.fim.prog2.Observer.Observable;
 import java.util.Stack;
 
-public class GuiToModel {
+public class DisplayData extends Observable {
 
-    private static Stack<Board> boards = createNewStack(Player.HUMAN);
+    private static Stack<Board> boards;
 
-    private GuiToModel() { }
+    public DisplayData() {
+        boards = createNewStack(Player.HUMAN);
+    }
 
-    public static void createNewBoard() {
+    public void createNewBoard() {
         assert boards.peek() != null : "Illegal State";
 
         Board top = boards.peek();
         boards = createNewStack(top.getFirstPlayer());
         machineMove();
+        setChanged();
     }
 
-    public static boolean move(int row, int col) {
+    public boolean move(int row, int col) {
         assert boards.peek() != null : "Illegal State";
 
         if (row > 0 && row <= Board.SIZE && col > 0 && col <= Board.SIZE) {
-            Board top = boards.peek();
-            if (!top.gameOver() || top.next() == Player.HUMAN) {
-                Board move = top.move(row, col);
+            if (!gameOver() || next() == Player.HUMAN) {
+                Board move = boards.peek().move(row, col);
                 if (move != null) {
                     boards.push(move);
+                    setChanged();
                     return true;
                 }
             }
@@ -34,7 +38,7 @@ public class GuiToModel {
         }
     }
 
-    public static void machineMove() {
+    public void machineMove() {
         assert boards.peek() != null : "Illegal State";
 
         Board top = boards.peek();
@@ -42,24 +46,23 @@ public class GuiToModel {
             if (top.next() == Player.MACHINE) {
                 Board move = top.machineMove();
                 boards.push(move);
+                setChanged();
             }
         }
     }
 
-    public static Player[][] getVisualisation() {
+    public Player getSlot(int row, int col) {
         assert boards.peek() != null : "Illegal State";
 
-        Player[][] boardVisualisation = new Player[Board.SIZE][Board.SIZE];
-        Board top = boards.peek();
-        for (int i = 0; i < Board.SIZE; i++) {
-            for (int u = 0; u < Board.SIZE; u++) {
-                boardVisualisation[i][u] = top.getSlot(i + 1, u + 1);
-            }
+        if (row > 0 && row <= Board.SIZE && col > 0 && col <= Board.SIZE) {
+            Board top = boards.peek();
+            return top.getSlot(row, col);
+        } else {
+            throw new IllegalArgumentException("Row or col illegal!");
         }
-        return boardVisualisation;
     }
 
-    public static void setLevel(int level) {
+    public void setLevel(int level) {
         assert boards.peek() != null : "Illegal State";
 
         if (level > 0) {
@@ -70,7 +73,7 @@ public class GuiToModel {
         }
     }
 
-    public static void switchPlayerOrder() {
+    public void switchPlayerOrder() {
         assert boards.peek() != null : "Illegal State";
 
         Board top = boards.peek();
@@ -80,21 +83,23 @@ public class GuiToModel {
         } else {
             boards = createNewStack(Player.HUMAN);
         }
+        setChanged();
     }
 
-    public static void undo() {
+    public void undo() {
         assert boards.peek() != null : "Illegal State";
 
         boolean humanMovePopped = false;
         while (!humanMovePopped && undoIsPossible()) {
             boards.pop();
+            setChanged();
             if (next() == Player.HUMAN) {
                 humanMovePopped = true;
             }
         }
     }
 
-    public static boolean undoIsPossible() {
+    public boolean undoIsPossible() {
         if (boards.peek().getFirstPlayer() == Player.HUMAN) {
             return boards.size() > 1;
         } else {
@@ -102,25 +107,25 @@ public class GuiToModel {
         }
     }
 
-    public static int getNumberOfHumanTiles() {
+    public int getNumberOfHumanTiles() {
         assert boards.peek() != null : "Illegal State";
 
         return boards.peek().getNumberOfHumanTiles();
     }
 
-    public static int getNumberOfMachineTiles() {
+    public int getNumberOfMachineTiles() {
         assert boards.peek() != null : "Illegal State";
 
         return boards.peek().getNumberOfMachineTiles();
     }
 
-    public static boolean gameOver() {
+    public boolean gameOver() {
         assert boards.peek() != null : "Illegal State";
 
         return boards.peek().gameOver();
     }
 
-    public static Player getWinner() {
+    public Player getWinner() {
         assert boards.peek() != null: "Illegal State";
 
         if (gameOver()) {
@@ -130,13 +135,13 @@ public class GuiToModel {
         }
     }
 
-    public static Player next() {
+    public Player next() {
         assert boards.peek() != null : "Illegal State";
 
         return boards.peek().next();
     }
 
-    private static Stack<Board> createNewStack(Player firstPlayer) {
+    private Stack<Board> createNewStack(Player firstPlayer) {
         assert firstPlayer != null : "First player cannot be undefined!";
 
         Stack<Board> stack = new Stack<>();
