@@ -1,6 +1,5 @@
 package de.uni_passau.fim.prog2.view;
 
-import de.uni_passau.fim.prog2.model.DisplayData;
 import de.uni_passau.fim.prog2.model.Board;
 import de.uni_passau.fim.prog2.model.Player;
 
@@ -13,13 +12,30 @@ import java.awt.GridBagConstraints;
 import java.awt.Font;
 import java.awt.Insets;
 
+/**
+ * Entspricht der visuellen Darstellung des Spielbretts inkl aller Indexe an
+ * den Spielbrettseiten.
+ *
+ * @version 15.01.20
+ * @author -----
+ */
 class GameBoard extends JPanel {
 
+    /**
+     * Entspricht den Feldern des Spielfelds.
+     */
     private Field[][] fields;
 
-    GameBoard(DisplayData displayData) {
-        assert displayData != null : "DisplayData cannot be null!";
-
+    /**
+     * Kreiert ein Spielfeld mit allen Feldern und Indexen an den Seitenrändern.
+     * Das Spielfeld ermöglicht eine Interaktion mit der Maus für die Züge des
+     * Menschen.
+     *
+     * @see                 #addHorizontalIndexes()
+     * @see                 #addVerticalIndexes()
+     * @see                 #addFields()
+     */
+    GameBoard() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         gridBagLayout.columnWeights = new double[]{0.0, 1.0};
         gridBagLayout.rowWeights = new double[]{0.0, 1.0};
@@ -27,55 +43,73 @@ class GameBoard extends JPanel {
 
         addHorizontalIndexes();
         addVerticalIndexes();
-        addFields(displayData);
+        addFields();
     }
 
-    private void addFields(DisplayData displayData) {
-        assert displayData != null : "DisplayData cannot be null!";
-
+    /**
+     * Erzeugt alle Spielfelder und fügt diese dem Spielbrett hinzu.
+     *
+     * @see                 #initializeFields()
+     * @see                 #createGridBagConstraints(int[])
+     */
+    private void addFields() {
         final int rightBorder = 8;
-        JPanel gameBoard = new JPanel();
         fields = new Field[Board.SIZE][Board.SIZE];
-        gameBoard.setLayout(new GridLayout(Board.SIZE, Board.SIZE));
+        JPanel gameBoard = new JPanel(new GridLayout(Board.SIZE, Board.SIZE));
         for (int i = 0; i < Board.SIZE; i++) {
             for (int u = 0; u < Board.SIZE; u++) {
-                fields[i][u] = new Field(i + 1, u + 1, displayData);
+                fields[i][u] = new Field(i + 1, u + 1);
                 gameBoard.add(fields[i][u]);
             }
         }
         initializeFields();
 
-        int[] parameters = {1, 1, 0, 0, 0, rightBorder};
-        add(gameBoard, createGridBagConstraints(parameters));
+        int[] parametersForGridBag = {1, 1, 0, 0, 0, rightBorder};
+        add(gameBoard, createGridBagConstraints(parametersForGridBag));
     }
 
+    /**
+     * Fügt dem Spielbrett die vertikalen Indexe hinzu.
+     *
+     * @see         #createGridBagConstraints(int[])
+     */
     private void addVerticalIndexes() {
         final int rightBorder = 5;
         final int leftBorder = 7;
-        JPanel verticalIndexes = new JPanel();
-        verticalIndexes.setLayout(new GridLayout(Board.SIZE, 1));
+        JPanel verticalIndexes = new JPanel(new GridLayout(Board.SIZE, 1));
         for (int i = 1; i <= Board.SIZE; i++) {
             verticalIndexes.add(createIndexJLabel(String.valueOf(i)));
         }
 
-        int[] parameters = {0, 1, 0, leftBorder, 0, rightBorder};
-        add(verticalIndexes, createGridBagConstraints(parameters));
+        int[] parametersForGridBag = {0, 1, 0, leftBorder, 0, rightBorder};
+        add(verticalIndexes, createGridBagConstraints(parametersForGridBag));
     }
 
+    /**
+     * Fügt dem Spielbrett die horizontalen Indexe hinzu.
+     *
+     * @see         #createGridBagConstraints(int[])
+     */
     private void addHorizontalIndexes() {
         final int rightBorder = 8;
         final int topBorder = 3;
         final int bottomBorder = 3;
-        JPanel horizontalIndexes = new JPanel();
-        horizontalIndexes.setLayout(new GridLayout(1, Board.SIZE));
+        JPanel horizontalIndexes = new JPanel(new GridLayout(1, Board.SIZE));
         for (int i = 1; i <= Board.SIZE; i++) {
             horizontalIndexes.add(createIndexJLabel(String.valueOf(i)));
         }
 
-        int[] parameters = {1, 0, topBorder, 0, bottomBorder, rightBorder};
-        add(horizontalIndexes, createGridBagConstraints(parameters));
+        int[] parametersForGridBag
+                = {1, 0, topBorder, 0, bottomBorder, rightBorder};
+        add(horizontalIndexes, createGridBagConstraints(parametersForGridBag));
     }
 
+    /**
+     * Kreiert {@code JLabel} die Indexanzeige.
+     *
+     * @param text      Entspricht dem Text.
+     * @return          Gibt das erzeugte {@code JLabel} zurück.
+     */
     private JLabel createIndexJLabel(String text) {
         assert text != null : "Text cannot be null!";
 
@@ -86,6 +120,14 @@ class GameBoard extends JPanel {
         return jLabel;
     }
 
+    /**
+     * Kreiert ein {@code GridBagConstraints} nach den übergebenen Parametern
+     * für das Einfügen von Komponenten im {@code GridBagLayout}.
+     *
+     * @param parameters    Entspricht den Parametern zur Erzeugung des
+     *                      {@code GridBagConstraints}.
+     * @return              Gibt das erzeugte {@code GridBagConstraint} zurück.
+     */
     private GridBagConstraints createGridBagConstraints(int[] parameters) {
         assert parameters.length == 6 : "Too less or too much parameter!";
 

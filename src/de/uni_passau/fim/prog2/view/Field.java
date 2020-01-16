@@ -69,11 +69,9 @@ class Field extends JPanel implements Observer {
         /**
          * Kreiert einen MouseAdapter für das Feld des Spielbretts, der für
          * die Mausinteraktion zuständig ist.
-         *
-         * @param displayData   Entspricht der Spiellogik.
          */
-        private FieldMouseAdapter(DisplayData displayData) {
-            this.displayData = displayData;
+        private FieldMouseAdapter() {
+            displayData = DisplayData.getInstance();
         }
 
         /**
@@ -135,11 +133,11 @@ class Field extends JPanel implements Observer {
          * @return      Gibt {@code true} zurück, falls das Spiel vorbei ist,
          *              ansonsten {@code false}.
          * @see         #showJOptionPane(String)
-         * @see         DisplayData#gameOver()
+         * @see         DisplayData#isGameOver()
          * @see         DisplayData#getWinner()
          */
         private boolean checkGameOver() {
-            if (displayData.gameOver()) {
+            if (displayData.isGameOver()) {
                 Player winner = displayData.getWinner();
 
                 if (winner == Player.MACHINE) {
@@ -161,19 +159,16 @@ class Field extends JPanel implements Observer {
      *
      * @param row           Entspricht der Zeile des Feldes.
      * @param col           Entspricht der Zeile des Feldes.
-     * @param displayData   Entspricht der Spiellogik, auf die bei Züge des
-     *                      Menschen zugegriffen werden muss.
      */
-    Field(int row, int col, DisplayData displayData) {
+    Field(int row, int col) {
         assert row > 0 && row <= Board.SIZE : "Row is illegal!";
         assert col > 0 && col <= Board.SIZE : "Col is illegal!";
-        assert displayData != null : "DisplayData cannot be null!";
 
         this.row = row;
         this.col = col;
-        displayData.addObserver(this);
         setBackground(fieldColor);
-        addMouseListener(new FieldMouseAdapter(displayData));
+        addMouseListener(new FieldMouseAdapter());
+        DisplayData.getInstance().addObserver(this);
     }
 
     /**
