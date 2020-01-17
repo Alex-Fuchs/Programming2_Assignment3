@@ -5,11 +5,12 @@ import de.uni_passau.fim.prog2.Observer.Observable;
 import java.util.Stack;
 
 /**
- * Entspricht dem Vermittler zwischen {@code Board}, der View und dem
+ * Entspricht dem Vermittler zwischen {@code Board} und der View mit dem
  * Controller. Die Klasse implementiert das Interface {@code Observable}
  * und benutzt das Design-Pattern Singleton, damit sowohl {@code ReversiGui}
- * als auch {@code Field} ohne ständiger Übergabe in Methoden bzw Konstruktor
- * darauf zugreifen können.
+ * und {@code Field} sich als {@code Observer} registrieren können, und der
+ * gesamte Controller darauf zugreifen kann, ohne ständig das Objekt in
+ * Methoden bzw Konstruktoren übergeben zu müssen.
  *
  * @version 15.01.20
  * @author -----
@@ -30,6 +31,8 @@ public class DisplayData extends Observable {
      * @see     #createNewStack(Player)
      */
     private DisplayData() {
+        assert ourInstance == null : "DisplayData already exists!";
+
         boards = createNewStack(Player.HUMAN);
     }
 

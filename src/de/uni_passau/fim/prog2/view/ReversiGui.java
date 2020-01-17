@@ -33,7 +33,7 @@ import java.awt.event.KeyAdapter;
  * @version 15.01.20
  * @author -----
  */
-class ReversiGui extends JFrame implements Observer {
+public class ReversiGui extends JFrame implements Observer {
 
     /**
      * Farbe des menschlichen Spielers, wobei diese für die Steine als auch
@@ -80,7 +80,6 @@ class ReversiGui extends JFrame implements Observer {
         contentPane.add(createMenu(), BorderLayout.SOUTH);
         addKeyShortCuts();
 
-        DisplayData.getInstance().addObserver(this);
         setFocusable(true);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(defaultWidth, defaultHeight);
@@ -152,10 +151,14 @@ class ReversiGui extends JFrame implements Observer {
         menu.setBorder(new EmptyBorder(verticalBorder, 0, verticalBorder, 0));
 
         humanScore = createScoreJLabel(ReversiGui.HUMAN_COLOR);
+        machineScore = createScoreJLabel(ReversiGui.MACHINE_COLOR);
+        DisplayData displayData = DisplayData.getInstance();
+        updateScores(displayData);
+        displayData.addObserver(this);
+
         menu.add(humanScore);
         menu.add(createJComboBox());
         addButtons(menu);
-        machineScore = createScoreJLabel(ReversiGui.MACHINE_COLOR);
         menu.add(machineScore);
         return menu;
     }
@@ -289,8 +292,7 @@ class ReversiGui extends JFrame implements Observer {
         assert fontColour != null : "The color for text cannot be null!";
 
         final Font scoreFont = new Font(null, Font.BOLD, 18);
-        final int beginningNumberOfTiles = 2;
-        JLabel jLabel = new JLabel(String.valueOf(beginningNumberOfTiles));
+        JLabel jLabel = new JLabel();
         jLabel.setHorizontalAlignment(SwingConstants.CENTER);
         jLabel.setForeground(fontColour);
         jLabel.setFont(scoreFont);
@@ -302,9 +304,58 @@ class ReversiGui extends JFrame implements Observer {
      */
     private void addKeyShortCuts() {
         addKeyListener(new KeyAdapter() {
+
+            /**
+             * Entspricht der Spiellogik, auf die zugegriffen werden muss, um
+             * die Operationen auszuführen.
+             */
+            DisplayData displayData = DisplayData.getInstance();
+
+            /**
+             * Speichert, ob momentan die ALT-Taste gedrückt ist.
+             */
+            boolean altIsPressed;
+
+            /**
+             * Wenn eine Taste gedrückt wird, wird überprüft, ob ebenfalls
+             * die ALT-Taste gedrückt wird und darauf wird die jeweilige
+             * Operation ausgeführt.
+             *
+             * @param e     Entspricht der auslösenden Taste.
+             */
             @Override
             public void keyPressed(KeyEvent e) {
                 super.keyPressed(e);
+                int keyCode = e.getKeyCode();
+
+                if (keyCode == KeyEvent.VK_ALT) {
+                    altIsPressed = true;
+                } else if (altIsPressed) {
+                    switch (keyCode) {
+                    case KeyEvent.VK_N:
+                        displayData.createNewBoard();
+                        break;
+                    case KeyEvent.VK_S:
+                        displayData.switchPlayerOrder();
+                        break;
+                    case KeyEvent.VK_U:
+                        if (displayData.undoIsPossible()) {
+                            displayData.undo();
+                        }
+                        break;
+                    case KeyEvent.VK_Q:
+                        dispose();
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                super.keyReleased(e);
+                if (e.getKeyCode() == KeyEvent.VK_ALT) {
+                    altIsPressed = false;
+                }
             }
         });
     }
@@ -324,7 +375,7 @@ class ReversiGui extends JFrame implements Observer {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                ReversiGui reversiGui = new ReversiGui();
+                new ReversiGui();
             }
         });
     }

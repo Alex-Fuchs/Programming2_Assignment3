@@ -7,13 +7,10 @@ import de.uni_passau.fim.prog2.model.DisplayData;
 import de.uni_passau.fim.prog2.model.Player;
 
 import javax.swing.JPanel;
-import javax.swing.JOptionPane;
 import java.awt.Color;
-import java.awt.Toolkit;
 import java.awt.Graphics2D;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 /**
  * Entspricht der visuellen Darstellung eines Feldes, auf das ein Stein gesetzt
@@ -55,124 +52,30 @@ class Field extends JPanel implements Observer {
     private Player playerOfStone;
 
     /**
-     * Entspricht einem {@code MouseAdapter}, der das Ziehen des Menschen
-     * durch einen Mausklick auf ein Feld ermöglicht.
-     */
-    private class FieldMouseAdapter extends MouseAdapter {
-
-        /**
-         * Entspricht der Spiellogik, auf die zugriffen werden muss, wenn ein
-         * Stein gelegt wird.
-         */
-        private DisplayData displayData;
-
-        /**
-         * Kreiert einen MouseAdapter für das Feld des Spielbretts, der für
-         * die Mausinteraktion zuständig ist.
-         */
-        private FieldMouseAdapter() {
-            displayData = DisplayData.getInstance();
-        }
-
-        /**
-         * Führt einen Zug des Menschen bei einem Mausklick aus, falls dieser
-         * an der Reihe ist, das Spiel nicht vorbei ist und der Zug legal ist.
-         * Die Maschine zieht sofort darauf. Es werden bei Ende des Spiels
-         * oder Aussetzen eines Spieler Meldungen ausgegeben.
-         *
-         * @param e     Entspricht dem Event des Mausklicks.
-         * @see         #checkGameOver()
-         * @see         #checkMissTurn(Player)
-         * @see         DisplayData#move(int, int)
-         * @see         DisplayData#machineMove()
-         */
-        @Override
-        public void mouseClicked(MouseEvent e) {
-            super.mouseClicked(e);
-            if (displayData.move(row, col)) {
-                if (!checkGameOver() && !checkMissTurn(Player.HUMAN)) {
-                    displayData.machineMove();
-                    while (!checkGameOver()
-                            && checkMissTurn(Player.MACHINE)) {
-                        displayData.machineMove();
-                    }
-                }
-            } else {
-                Toolkit.getDefaultToolkit().beep();
-            }
-        }
-
-        /**
-         * Überprüft, ob ein Spieler aussetzen muss und gibt darauf eine
-         * Meldung aus.
-         *
-         * @param lastMovingPlayer  Entspricht dem zuletzt gezogenen Spieler.
-         * @return                  Gibt {@code true} zurück, falls ein
-         *                          Spieler aussetzen muss, ansonsten
-         *                          {@code false}.
-         * @see                     #showJOptionPane(String)
-         * @see                     DisplayData#next()
-         */
-        private boolean checkMissTurn(Player lastMovingPlayer) {
-            assert lastMovingPlayer != null : "Last player cannot be null!";
-
-            if (displayData.next() == lastMovingPlayer) {
-                if (lastMovingPlayer == Player.HUMAN) {
-                    showJOptionPane("Machine has to miss a turn!");
-                } else {
-                    showJOptionPane("Human has to miss a turn!");
-                }
-                return true;
-            }
-            return false;
-        }
-
-        /**
-         * Überprüft, ob das Spiel vorbei ist und gibt darauf eine Meldung aus.
-         *
-         * @return      Gibt {@code true} zurück, falls das Spiel vorbei ist,
-         *              ansonsten {@code false}.
-         * @see         #showJOptionPane(String)
-         * @see         DisplayData#isGameOver()
-         * @see         DisplayData#getWinner()
-         */
-        private boolean checkGameOver() {
-            if (displayData.isGameOver()) {
-                Player winner = displayData.getWinner();
-
-                if (winner == Player.MACHINE) {
-                    showJOptionPane("The bot has won");
-                } else if (winner == Player.HUMAN) {
-                    showJOptionPane("The human has Won!");
-                } else {
-                    showJOptionPane("Tie Game");
-                }
-                return true;
-            }
-            return false;
-        }
-    }
-
-    /**
      * Kreiert die visuelle Darstellung eines Feldes des Spielbretts, durch
-     * die per Mausklick der Mensch ziehen kann.
+     * die der Mensch per Mausklick ziehen kann.
      *
-     * @param row           Entspricht der Zeile des Feldes.
-     * @param col           Entspricht der Zeile des Feldes.
+     * @param row               Entspricht der Zeile des Feldes.
+     * @param col               Entspricht der Zeile des Feldes.
+     * @param mouseAdapter      Ermöglicht das Zeihen durch Mausklick.
      */
-    Field(int row, int col) {
+    Field(int row, int col, MouseAdapter mouseAdapter) {
         assert row > 0 && row <= Board.SIZE : "Row is illegal!";
         assert col > 0 && col <= Board.SIZE : "Col is illegal!";
+        assert mouseAdapter != null : "MouseAdapter cannot be null!";
 
         this.row = row;
         this.col = col;
+        addMouseListener(mouseAdapter);
         setBackground(fieldColor);
-        addMouseListener(new FieldMouseAdapter());
-        DisplayData.getInstance().addObserver(this);
+        DisplayData displayData = DisplayData.getInstance();
+        playerOfStone = displayData.getSlot(row, col);
+        displayData.addObserver(this);
     }
 
     /**
-     * Updatet die visuelle Darstellung des Feldes.
+     * Updatet die visuelle Darstellung des Feldes und somit des Steines, falls
+     * das Feld nicht leer ist.
      *
      * @param o     Entspricht der Spiellogik.
      * @see         DisplayData#getSlot(int, int)
@@ -191,9 +94,24 @@ class Field extends JPanel implements Observer {
         }
     }
 
-    void initialize(Player player) {
-        playerOfStone = player;
-        repaint();
+    /**
+     * Gibt die Zeile des Feldes zurück.
+     *
+     * @return      Entspricht der Zeile zwischen {@code 1} und
+     *              {@code Board.SIZE}.
+     */
+    int getRow() {
+        return row;
+    }
+
+    /**
+     * Gibt die Spalte des Feldes zurück.
+     *
+     * @return      Entspricht der Spalte zwischen {@code 1} und
+     *              {@code Board.SIZE}.
+     */
+    int getCol() {
+        return col;
     }
 
     /**
@@ -245,18 +163,5 @@ class Field extends JPanel implements Observer {
         graphics.fillOval(borderOfStone, borderOfStone,
                 getWidth() - borderOfStone * 2,
                 getHeight() - borderOfStone * 2);
-    }
-
-    /**
-     * Gibt eine Meldung aus.
-     *
-     * @param message       Entspricht dem Text, der in der Meldung ausgegeben
-     *                      werden soll.
-     */
-    private void showJOptionPane(String message) {
-        assert message != null : "Message cannot be null!";
-
-        JOptionPane.showMessageDialog(null, message,
-                "Information Message", JOptionPane.INFORMATION_MESSAGE);
     }
 }
