@@ -15,7 +15,7 @@ import java.util.Stack;
  * @version 15.01.20
  * @author -----
  */
-public class DisplayData extends Observable {
+public final class DisplayData extends Observable {
 
     private static DisplayData ourInstance = new DisplayData();
 
@@ -53,7 +53,7 @@ public class DisplayData extends Observable {
      * @see     #updateObserver()
      */
     public void createNewBoard() {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         boards = createNewStack(boards.peek().getFirstPlayer());
         machineMove();
@@ -81,7 +81,7 @@ public class DisplayData extends Observable {
      * @see                                 Board#move(int, int)
      */
     public boolean move(int row, int col) {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         if (!isGameOver() && next() == Player.HUMAN) {
             Board move = boards.peek().move(row, col);
@@ -104,7 +104,7 @@ public class DisplayData extends Observable {
      * @see     Board#machineMove()
      */
     public void machineMove() {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         if (!isGameOver()) {
             if (next() == Player.MACHINE) {
@@ -129,7 +129,7 @@ public class DisplayData extends Observable {
      * @see                                 Board#getSlot(int, int)
      */
     public Player getSlot(int row, int col) {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         return boards.peek().getSlot(row, col);
     }
@@ -143,7 +143,7 @@ public class DisplayData extends Observable {
      * @see                                 Board#setLevel(int)
      */
     public void setLevel(int level) {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         boards.peek().setLevel(level);
     }
@@ -153,7 +153,7 @@ public class DisplayData extends Observable {
      * View.
      */
     public void switchPlayerOrder() {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         if (boards.peek().getFirstPlayer() == Player.HUMAN) {
             boards = createNewStack(Player.MACHINE);
@@ -171,7 +171,7 @@ public class DisplayData extends Observable {
      * @see         #undoIsPossible()
      */
     public void undo() {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         boolean humanMovePopped = false;
         while (!humanMovePopped && undoIsPossible()) {
@@ -190,6 +190,8 @@ public class DisplayData extends Observable {
      *              andernfalls {@code false}.
      */
     public boolean undoIsPossible() {
+        assert boards.peek() != null : "Illegal state of DisplayData";
+
         final int minimumMovesForUndo;
         if (boards.peek().getFirstPlayer() == Player.HUMAN) {
             minimumMovesForUndo = 2;
@@ -207,7 +209,7 @@ public class DisplayData extends Observable {
      * @see         Board#getNumberOfHumanTiles()
      */
     public int getNumberOfHumanTiles() {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         return boards.peek().getNumberOfHumanTiles();
     }
@@ -219,7 +221,7 @@ public class DisplayData extends Observable {
      * @see         Board#getNumberOfMachineTiles()
      */
     public int getNumberOfMachineTiles() {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         return boards.peek().getNumberOfMachineTiles();
     }
@@ -232,7 +234,7 @@ public class DisplayData extends Observable {
      * @see         Board#gameOver()
      */
     public boolean isGameOver() {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         return boards.peek().gameOver();
     }
@@ -246,7 +248,7 @@ public class DisplayData extends Observable {
      * @see                                 Board#getWinner()
      */
     public Player getWinner() {
-        assert boards.peek() != null: "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         return boards.peek().getWinner();
     }
@@ -258,7 +260,7 @@ public class DisplayData extends Observable {
      * @see         Board#next()
      */
     public Player next() {
-        assert boards.peek() != null : "Illegal State";
+        assert boards.peek() != null : "Illegal state of DisplayData";
 
         return boards.peek().next();
     }

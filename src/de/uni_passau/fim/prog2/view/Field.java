@@ -2,20 +2,20 @@ package de.uni_passau.fim.prog2.view;
 
 import de.uni_passau.fim.prog2.Observer.Observable;
 import de.uni_passau.fim.prog2.Observer.Observer;
-import de.uni_passau.fim.prog2.model.Board;
 import de.uni_passau.fim.prog2.model.DisplayData;
+import de.uni_passau.fim.prog2.model.Board;
 import de.uni_passau.fim.prog2.model.Player;
 
 import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Color;
 import java.awt.event.MouseAdapter;
 
 /**
- * Entspricht der visuellen Darstellung eines Feldes, auf das ein Stein gesetzt
- * werden kann. Die Klasse implementiert das Interface {@code Observer}, da
- * diese von {@code DisplayData} bei neuen Spielbrettern geupdatet wird.
+ * Implementiert der visuellen Darstellung eines Feldes, auf das ein Stein
+ * gesetzt werden kann. Die Klasse implementiert das Interface {@code Observer},
+ * da diese von {@code DisplayData} bei neuen Spielbrettern geupdatet wird.
  *
  * @version 15.01.20
  * @author -----
@@ -26,12 +26,12 @@ class Field extends JPanel implements Observer {
      * Entspricht der Hintergrundfarbe eines Feldes, die für alle Objekte
      * immer gleich ist.
      */
-    private static final Color fieldColor = new Color(0, 180, 0);
+    private static final Color FIELD_COLOR = new Color(0, 180, 0);
 
     /**
      * Entspricht dem Abstand von der Feldlinie zum Steinrand.
      */
-    private static final int borderOfStone = 10;
+    private static final int BORDER_OF_STONE = 10;
 
     /**
      * Entspricht der Zeile des Feldes auf dem Spielbrett, wobei nord-westlich
@@ -67,22 +67,25 @@ class Field extends JPanel implements Observer {
         this.row = row;
         this.col = col;
         addMouseListener(mouseAdapter);
-        setBackground(fieldColor);
+        setBackground(FIELD_COLOR);
         DisplayData displayData = DisplayData.getInstance();
         playerOfStone = displayData.getSlot(row, col);
         displayData.addObserver(this);
     }
 
     /**
-     * Updatet die visuelle Darstellung des Feldes und somit des Steines, falls
-     * das Feld nicht leer ist.
+     * Updatet die visuelle Darstellung des Steines, falls das Feld nicht
+     * leer ist.
      *
-     * @param o     Entspricht der Spiellogik.
-     * @see         DisplayData#getSlot(int, int)
+     * @param o                             Entspricht der Spiellogik.
+     * @throws IllegalArgumentException     Wird geworfen, falls {@code o}
+     *                                      {@code null} ist, oder kein Objekt
+     *                                      von {@code DisplayData}.
+     * @see                                 DisplayData#getSlot(int, int)
      */
     @Override
     public void update(Observable o) {
-        if (o != null) {
+        if (o instanceof DisplayData) {
             Player playerOfStone = ((DisplayData) o).getSlot(row, col);
 
             if (this.playerOfStone != playerOfStone) {
@@ -90,7 +93,7 @@ class Field extends JPanel implements Observer {
                 repaint();
             }
         } else {
-            throw new IllegalArgumentException("Observable cannot be null!");
+            throw new IllegalArgumentException("Observable is illegal!");
         }
     }
 
@@ -160,8 +163,8 @@ class Field extends JPanel implements Observer {
         } else {
             graphics.setColor(ReversiGui.MACHINE_COLOR);
         }
-        graphics.fillOval(borderOfStone, borderOfStone,
-                getWidth() - borderOfStone * 2,
-                getHeight() - borderOfStone * 2);
+        graphics.fillOval(BORDER_OF_STONE, BORDER_OF_STONE,
+                getWidth() - BORDER_OF_STONE * 2,
+                getHeight() - BORDER_OF_STONE * 2);
     }
 }

@@ -9,10 +9,9 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.border.EmptyBorder;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
 import java.awt.Font;
 import java.awt.Color;
 import java.awt.BorderLayout;
@@ -24,16 +23,17 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
 
 /**
- * Entspricht der visuellen Darstellung von Reversi inkl Menü. Das Menü
+ * Implementiert die visuelle Darstellung von Reversi inkl Menü. Das Menü
  * beinhaltet {@code JButtons}, um ein neues Spiel zu beginnen, den Eröffner zu
  * wechseln, einen Spielzug rückgängig zu machen und für die Levelauswahl
  * eine {@code JComboBox}. Es ist ebenfalls möglich das Menü mit
- * Tastenkombinationen zu benutzen.
+ * Tastenkombinationen zu benutzen. Die Klasse implementiert das Interface
+ * {@code Observer}, da diese von {@code DisplayData} geupdatet wird.
  *
  * @version 15.01.20
  * @author -----
  */
-public class ReversiGui extends JFrame implements Observer {
+public final class ReversiGui extends JFrame implements Observer {
 
     /**
      * Farbe des menschlichen Spielers, wobei diese für die Steine als auch
@@ -80,9 +80,9 @@ public class ReversiGui extends JFrame implements Observer {
         contentPane.add(createMenu(), BorderLayout.SOUTH);
         addKeyShortCuts();
 
-        setFocusable(true);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(defaultWidth, defaultHeight);
+        setFocusable(true);
         setVisible(true);
     }
 
@@ -90,18 +90,21 @@ public class ReversiGui extends JFrame implements Observer {
      * Updatet die visuelle Darstellung der Scores und updatet die
      * Verfügbarkeit von {@code undo}.
      *
-     * @param o     Entspricht der Spiellogik.
-     * @see         #updateScores(DisplayData)
-     * @see         #updateUndo(DisplayData)
+     * @param o                             Entspricht der Spiellogik.
+     * @throws IllegalArgumentException     Wird geworfen, falls {@code o}
+     *                                      {@code null} ist, oder kein Objekt
+     *                                      von {@code DisplayData}.
+     * @see                                 #updateScores(DisplayData)
+     * @see                                 #updateUndo(DisplayData)
      */
     @Override
     public void update(Observable o) {
-        if (o != null) {
+        if (o instanceof DisplayData) {
             DisplayData displayData = (DisplayData) o;
             updateUndo(displayData);
             updateScores(displayData);
         } else {
-            throw new IllegalArgumentException("Observable cannot be null!");
+            throw new IllegalArgumentException("Observable is illegal!");
         }
     }
 
@@ -113,10 +116,12 @@ public class ReversiGui extends JFrame implements Observer {
      * @see                 DisplayData#getNumberOfMachineTiles()
      */
     private void updateScores(DisplayData displayData) {
-        assert displayData != null : "DisplayData cannot be null!";
+        assert displayData != null : "Information is needed from displayData!";
 
-        humanScore.setText(String.valueOf(displayData.getNumberOfHumanTiles()));
-        machineScore.setText(String.valueOf(displayData.getNumberOfMachineTiles()));
+        humanScore.setText(
+                String.valueOf(displayData.getNumberOfHumanTiles()));
+        machineScore.setText(
+                String.valueOf(displayData.getNumberOfMachineTiles()));
     }
 
     /**
@@ -126,7 +131,7 @@ public class ReversiGui extends JFrame implements Observer {
      * @see                 DisplayData#undoIsPossible()
      */
     private void updateUndo(DisplayData displayData) {
-        assert displayData != null: "DisplayData cannot be null!";
+        assert displayData != null : "Information is needed from displayData!";
 
         if (displayData.undoIsPossible()) {
             undo.setEnabled(true);
@@ -136,7 +141,7 @@ public class ReversiGui extends JFrame implements Observer {
     }
 
     /**
-     * Kreiert die visuelle Darstellung des Spiels.
+     * Kreiert die visuelle Darstellung des Menü.
      *
      * @see                 #createScoreJLabel(Color)
      * @see                 #createJComboBox()
@@ -166,7 +171,7 @@ public class ReversiGui extends JFrame implements Observer {
     /**
      * Fügt die {@code JButtons} des Menüs hinzu.
      *
-     * @param menu              Entspricht dem Menü.
+     * @param menu              Entspricht dem gesamten Menü.
      */
     private void addButtons(JPanel menu) {
         assert menu != null : "The menu to add cannot be null!";
@@ -232,16 +237,15 @@ public class ReversiGui extends JFrame implements Observer {
              * Spieler rückgängig zu machen, falls dieser bereits gezogen ist.
              *
              * @param e     Entspricht dem auslösenden Klick.
-             * @see         DisplayData#createNewBoard()
+             * @see         DisplayData#undoIsPossible()
+             * @see         DisplayData#undo()
              */
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (displayData.undoIsPossible()) {
-                    displayData.undo();
-                } else {
-                    throw new IllegalStateException("Undo should be disabled!");
-                }
+                assert displayData.undoIsPossible() : "Undo should be disabled"
+                        + " otherwise!";
 
+                displayData.undo();
             }
         });
         menu.add(undo);
@@ -272,10 +276,22 @@ public class ReversiGui extends JFrame implements Observer {
         JComboBox jComboBox = new JComboBox<>(itemsOfJComboBox);
         jComboBox.setSelectedItem(defaultLevel);
         jComboBox.addActionListener(new ActionListener() {
+
+            /**
+             * Entspricht der Spiellogik, auf die zugriffen werden muss,
+             * wenn das Level verändert wird.
+             */
+            private DisplayData displayData = DisplayData.getInstance();
+
+            /**
+             * Setzt das Level auf einen positiven Wert.
+             *
+             * @param e      Entspricht dem auslösenden Klick.
+             * @see          DisplayData#setLevel(int)
+             */
             @Override
             public void actionPerformed(ActionEvent e) {
-                int level = (int) jComboBox.getSelectedItem();
-                DisplayData.getInstance().setLevel(level);
+                displayData.setLevel((int) jComboBox.getSelectedItem());
             }
         });
         return jComboBox;
@@ -291,7 +307,7 @@ public class ReversiGui extends JFrame implements Observer {
     private JLabel createScoreJLabel(Color fontColour) {
         assert fontColour != null : "The color for text cannot be null!";
 
-        final Font scoreFont = new Font(null, Font.BOLD, 18);
+        final Font scoreFont = new Font(null, Font.BOLD, 20);
         JLabel jLabel = new JLabel();
         jLabel.setHorizontalAlignment(SwingConstants.CENTER);
         jLabel.setForeground(fontColour);
@@ -309,19 +325,23 @@ public class ReversiGui extends JFrame implements Observer {
              * Entspricht der Spiellogik, auf die zugegriffen werden muss, um
              * die Operationen auszuführen.
              */
-            DisplayData displayData = DisplayData.getInstance();
+            private DisplayData displayData = DisplayData.getInstance();
 
             /**
              * Speichert, ob momentan die ALT-Taste gedrückt ist.
              */
-            boolean altIsPressed;
+            private boolean altIsPressed;
 
             /**
              * Wenn eine Taste gedrückt wird, wird überprüft, ob ebenfalls
              * die ALT-Taste gedrückt wird und darauf wird die jeweilige
-             * Operation ausgeführt.
+             * Operation ausgeführt. Speichert ebenfalls, ob die ALT-Taste
+             * gedrückt wird.
              *
              * @param e     Entspricht der auslösenden Taste.
+             * @see         DisplayData#createNewBoard()
+             * @see         DisplayData#switchPlayerOrder()
+             * @see         DisplayData#undo()
              */
             @Override
             public void keyPressed(KeyEvent e) {
@@ -346,10 +366,17 @@ public class ReversiGui extends JFrame implements Observer {
                     case KeyEvent.VK_Q:
                         dispose();
                         break;
+                    default:
+                        break;
                     }
                 }
             }
 
+            /**
+             * Wird benötigt, um zu speichern, ob die ALT-Taste gedrückt wird.
+             *
+             * @param e     Entspricht der auslösenden Taste.
+             */
             @Override
             public void keyReleased(KeyEvent e) {
                 super.keyReleased(e);
@@ -366,12 +393,6 @@ public class ReversiGui extends JFrame implements Observer {
      * @param args  Übergabeparameter des Programms.
      */
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

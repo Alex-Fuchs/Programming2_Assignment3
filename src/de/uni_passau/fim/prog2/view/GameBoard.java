@@ -1,7 +1,7 @@
 package de.uni_passau.fim.prog2.view;
 
-import de.uni_passau.fim.prog2.model.Board;
 import de.uni_passau.fim.prog2.model.DisplayData;
+import de.uni_passau.fim.prog2.model.Board;
 import de.uni_passau.fim.prog2.model.Player;
 
 import javax.swing.JPanel;
@@ -18,7 +18,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Entspricht der visuellen Darstellung des Spielbretts inkl aller Indexe an
+ * Implementiert die visuelle Darstellung des Spielbretts inkl aller Indexe an
  * den Spielbrettseiten.
  *
  * @version 15.01.20
@@ -54,10 +54,10 @@ class GameBoard extends JPanel {
     private void addFields() {
         final int rightBorder = 8;
         JPanel gameBoard = new JPanel(new GridLayout(Board.SIZE, Board.SIZE));
-        MouseAdapter mouseAdapter = createMouseAdapter();
+        MouseAdapter fieldMouseAdapter = new FieldMouseAdapter();
         for (int i = 0; i < Board.SIZE; i++) {
             for (int u = 0; u < Board.SIZE; u++) {
-                gameBoard.add(new Field(i + 1, u + 1, mouseAdapter));
+                gameBoard.add(new Field(i + 1, u + 1, fieldMouseAdapter));
             }
         }
 
@@ -102,7 +102,7 @@ class GameBoard extends JPanel {
     }
 
     /**
-     * Kreiert {@code JLabel} die Indexanzeige.
+     * Kreiert {@code JLabel} für die Indexanzeige.
      *
      * @param text      Entspricht dem Text.
      * @return          Gibt das erzeugte {@code JLabel} zurück.
@@ -138,105 +138,104 @@ class GameBoard extends JPanel {
     }
 
     /**
-     * Kreiert einen {@code MouseAdapter}, der für das Ziehen per Mausklick
-     * zuständig ist. Der {@code MouseAdapter} wurde nach {@code GameBoard}
-     * ausgelagert, da so lediglich eine Instanz für alle Spielfelder
-     * erstellt werden muss und diese wird den Feldern im Konstruktor
-     * hinzugefügt.
-     *
-     * @return      Entspricht einem {@code MouseAdapter} für alle
-     *              {@code Fields}.
+     * Entspricht einem {@code MouseAdapter}, der das Ziehen des Menschen
+     * durch einen Mausklick auf ein Feld ermöglicht, wobei ein Objekt für
+     * alle Felder ausreicht.
      */
-    private MouseAdapter createMouseAdapter() {
-        return new MouseAdapter() {
+    private final class FieldMouseAdapter extends MouseAdapter {
 
-            /**
-             * Entspricht der Spiellogik, auf die zugriffen werden muss, wenn
-             * ein Stein gelegt wird.
-             */
-            private DisplayData displayData = DisplayData.getInstance();
+        /**
+         * Entspricht der Spiellogik, auf die zugriffen werden muss, wenn ein
+         * Stein gelegt wird.
+         */
+        private DisplayData displayData;
 
-            /**
-             * Führt einen Zug des Menschen bei einem Mausklick aus, falls
-             * dieser an der Reihe ist, das Spiel nicht vorbei ist und der Zug
-             * legal ist. Die Maschine zieht sofort darauf. Es werden bei Ende
-             * des Spiels oder Aussetzen eines Spieler Meldungen ausgegeben.
-             *
-             * @param e     Entspricht dem Event des Mausklicks.
-             * @see         #checkGameOver()
-             * @see         #checkMissTurn(Player)
-             * @see         DisplayData#move(int, int)
-             * @see         DisplayData#machineMove()
-             */
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                Field field = (Field) e.getComponent();
-                if (displayData.move(field.getRow(), field.getCol())) {
-                    if (!checkGameOver() && !checkMissTurn(Player.HUMAN)) {
+        /**
+         * Kreiert einen MouseAdapter für das Feld des Spielbretts, der für
+         * die Mausinteraktion zuständig ist.
+         */
+        private FieldMouseAdapter() {
+            displayData = DisplayData.getInstance();
+        }
+
+        /**
+         * Führt einen Zug des Menschen bei einem Mausklick aus, falls dieser
+         * an der Reihe ist, das Spiel nicht vorbei ist und der Zug legal ist.
+         * Die Maschine zieht sofort darauf. Es werden bei Ende des Spiels
+         * oder Aussetzen eines Spieler Meldungen ausgegeben.
+         *
+         * @param e     Entspricht dem Event des Mausklicks.
+         * @see         #checkGameOver()
+         * @see         #checkMissTurn(Player)
+         * @see         DisplayData#move(int, int)
+         * @see         DisplayData#machineMove()
+         */
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            super.mouseClicked(e);
+            Field field = (Field) e.getComponent();
+            if (displayData.move(field.getRow(), field.getCol())) {
+                if (!checkGameOver() && !checkMissTurn(Player.HUMAN)) {
+                    displayData.machineMove();
+                    while (!checkGameOver()
+                            && checkMissTurn(Player.MACHINE)) {
                         displayData.machineMove();
-                        while (!checkGameOver()
-                                && checkMissTurn(Player.MACHINE)) {
-                            displayData.machineMove();
-                        }
                     }
+                }
+            } else {
+                Toolkit.getDefaultToolkit().beep();
+            }
+        }
+
+        /**
+         * Überprüft, ob ein Spieler aussetzen muss und gibt darauf eine
+         * Meldung aus.
+         *
+         * @param lastMovingPlayer  Entspricht dem zuletzt gezogenen Spieler.
+         * @return                  Gibt {@code true} zurück, falls ein
+         *                          Spieler aussetzen muss, ansonsten
+         *                          {@code false}.
+         * @see                     #showJOptionPane(String)
+         * @see                     DisplayData#next()
+         */
+        private boolean checkMissTurn(Player lastMovingPlayer) {
+            assert lastMovingPlayer != null : "Last player cannot be null!";
+
+            if (displayData.next() == lastMovingPlayer) {
+                if (lastMovingPlayer == Player.HUMAN) {
+                    showJOptionPane("Machine has to miss a turn!");
                 } else {
-                    Toolkit.getDefaultToolkit().beep();
+                    showJOptionPane("Human has to miss a turn!");
                 }
+                return true;
             }
+            return false;
+        }
 
-            /**
-             * Überprüft, ob ein Spieler aussetzen muss und gibt darauf eine
-             * Meldung aus.
-             *
-             * @param lastMovingPlayer  Entspricht dem zuletzt gezogenen
-             *                          Spieler.
-             * @return                  Gibt {@code true} zurück, falls ein
-             *                          Spieler aussetzen muss, ansonsten
-             *                          {@code false}.
-             * @see                     GameBoard#showJOptionPane(String)
-             * @see                     DisplayData#next()
-             */
-            private boolean checkMissTurn(Player lastMovingPlayer) {
-                assert lastMovingPlayer != null : "Last player cannot be null!";
+        /**
+         * Überprüft, ob das Spiel vorbei ist und gibt darauf eine Meldung aus.
+         *
+         * @return      Gibt {@code true} zurück, falls das Spiel vorbei ist,
+         *              ansonsten {@code false}.
+         * @see         #showJOptionPane(String)
+         * @see         DisplayData#isGameOver()
+         * @see         DisplayData#getWinner()
+         */
+        private boolean checkGameOver() {
+            if (displayData.isGameOver()) {
+                Player winner = displayData.getWinner();
 
-                if (displayData.next() == lastMovingPlayer) {
-                    if (lastMovingPlayer == Player.HUMAN) {
-                        showJOptionPane("Machine has to miss a turn!");
-                    } else {
-                        showJOptionPane("Human has to miss a turn!");
-                    }
-                    return true;
+                if (winner == Player.MACHINE) {
+                    showJOptionPane("The bot has won");
+                } else if (winner == Player.HUMAN) {
+                    showJOptionPane("The human has Won!");
+                } else {
+                    showJOptionPane("Tie Game");
                 }
-                return false;
+                return true;
             }
-
-            /**
-             * Überprüft, ob das Spiel vorbei ist und gibt darauf eine Meldung
-             * aus.
-             *
-             * @return      Gibt {@code true} zurück, falls das Spiel vorbei
-             *              ist, ansonsten {@code false}.
-             * @see         GameBoard#showJOptionPane(String)
-             * @see         DisplayData#isGameOver()
-             * @see         DisplayData#getWinner()
-             */
-            private boolean checkGameOver() {
-                if (displayData.isGameOver()) {
-                    Player winner = displayData.getWinner();
-
-                    if (winner == Player.MACHINE) {
-                        showJOptionPane("The bot has won");
-                    } else if (winner == Player.HUMAN) {
-                        showJOptionPane("The human has Won!");
-                    } else {
-                        showJOptionPane("Tie Game");
-                    }
-                    return true;
-                }
-                return false;
-            }
-        };
+            return false;
+        }
     }
 
     /**
