@@ -1,10 +1,6 @@
 package de.uni_passau.fim.prog2.view;
 
-import de.uni_passau.fim.prog2.Observer.Observable;
-import de.uni_passau.fim.prog2.Observer.Observer;
-import de.uni_passau.fim.prog2.model.DisplayData;
 import de.uni_passau.fim.prog2.model.Board;
-import de.uni_passau.fim.prog2.model.Player;
 
 import javax.swing.JPanel;
 import java.awt.Graphics;
@@ -14,13 +10,12 @@ import java.awt.event.MouseAdapter;
 
 /**
  * Implementiert der visuellen Darstellung eines Feldes, auf das ein Stein
- * gesetzt werden kann. Die Klasse implementiert das Interface {@code Observer},
- * da diese von {@code DisplayData} bei neuen Spielbrettern geupdatet wird.
+ * gesetzt werden kann.
  *
  * @version 15.01.20
  * @author -----
  */
-class Field extends JPanel implements Observer {
+class Field extends JPanel {
 
     /**
      * Entspricht der Hintergrundfarbe eines Feldes, die für alle Objekte
@@ -46,10 +41,10 @@ class Field extends JPanel implements Observer {
     private int col;
 
     /**
-     * Entspricht dem Spieler, der auf diesem Feld einen Stein gelegt hat,
-     * ansonsten {@code null}.
+     * Entspricht der Farbe des Spielsteines, wobei diese auch {@code null}
+     * sein kann, falls kein Stein auf dem Feld liegt.
      */
-    private Player playerOfStone;
+    private Color colorOfStone;
 
     /**
      * Kreiert die visuelle Darstellung eines Feldes des Spielbretts, durch
@@ -68,32 +63,20 @@ class Field extends JPanel implements Observer {
         this.col = col;
         addMouseListener(mouseAdapter);
         setBackground(FIELD_COLOR);
-        DisplayData displayData = DisplayData.getInstance();
-        playerOfStone = displayData.getSlot(row, col);
-        displayData.addObserver(this);
     }
 
     /**
-     * Updatet die visuelle Darstellung des Steines, falls das Feld nicht
-     * leer ist.
+     * Falls {@code colorOfStone} {@code null} entspricht, liegt nun kein Stein
+     * mehr auf dem Feld, andernfalls wird die Farbe des Steines entsprechend
+     * gesetzt.
      *
-     * @param o                             Entspricht der Spiellogik.
-     * @throws IllegalArgumentException     Wird geworfen, falls {@code o}
-     *                                      {@code null} ist, oder kein Objekt
-     *                                      von {@code DisplayData}.
-     * @see                                 DisplayData#getSlot(int, int)
+     * @param colorOfStone      Entspricht der Farbe des Steines, falls dieser
+     *                          vorhanden ist, ansonsten {@code null}.
      */
-    @Override
-    public void update(Observable o) {
-        if (o instanceof DisplayData) {
-            Player playerOfStone = ((DisplayData) o).getSlot(row, col);
-
-            if (this.playerOfStone != playerOfStone) {
-                this.playerOfStone = playerOfStone;
-                repaint();
-            }
-        } else {
-            throw new IllegalArgumentException("Observable is illegal!");
+    void setColorOfStone(Color colorOfStone) {
+        if (this.colorOfStone != colorOfStone) {
+            this.colorOfStone = colorOfStone;
+            repaint();
         }
     }
 
@@ -130,7 +113,7 @@ class Field extends JPanel implements Observer {
         super.paintComponent(g);
         Graphics2D graphics = (Graphics2D) g;
         drawFieldLines(graphics);
-        if (playerOfStone != null) {
+        if (colorOfStone != null) {
             drawStone(graphics);
         }
     }
@@ -156,13 +139,9 @@ class Field extends JPanel implements Observer {
      * @param graphics  Entspricht der visuellen Darstellungskomponente.
      */
     private void drawStone(Graphics2D graphics) {
-        assert playerOfStone != null : "Stone of Player cannot be null!";
+        assert colorOfStone != null : "Color of Stone cannot be null!";
 
-        if (playerOfStone == Player.HUMAN) {
-            graphics.setColor(ReversiGui.HUMAN_COLOR);
-        } else {
-            graphics.setColor(ReversiGui.MACHINE_COLOR);
-        }
+        graphics.setColor(colorOfStone);
         graphics.fillOval(BORDER_OF_STONE, BORDER_OF_STONE,
                 getWidth() - BORDER_OF_STONE * 2,
                 getHeight() - BORDER_OF_STONE * 2);

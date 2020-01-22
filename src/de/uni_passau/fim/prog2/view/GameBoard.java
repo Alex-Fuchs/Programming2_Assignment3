@@ -1,5 +1,7 @@
 package de.uni_passau.fim.prog2.view;
 
+import de.uni_passau.fim.prog2.Observer.Observable;
+import de.uni_passau.fim.prog2.Observer.Observer;
 import de.uni_passau.fim.prog2.model.DisplayData;
 import de.uni_passau.fim.prog2.model.Board;
 import de.uni_passau.fim.prog2.model.Player;
@@ -8,34 +10,45 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JOptionPane;
-import java.awt.Toolkit;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.Color;
+import java.awt.GridLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
-import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
  * Implementiert die visuelle Darstellung des Spielbretts inkl aller Indexe an
- * den Spielbrettseiten.
+ * den Spielbrettseiten und ermöglicht Mausinteraktionen mit dem Spielbrett.
+ * Die Klasse implementiert das Inteface {@code Observer}, um von der
+ * Spiellogik bei Änderungen benachrichtigt werden zu können.
  *
  * @version 15.01.20
  * @author -----
  */
-class GameBoard extends JPanel {
+class GameBoard extends JPanel implements Observer {
+
+    /**
+     * Entspricht den Feldern des Spielbretts.
+     */
+    private Field[][] fields;
 
     /**
      * Kreiert ein Spielfeld mit allen Feldern und Indexen an den Seitenrändern.
      * Das Spielfeld ermöglicht eine Interaktion mit der Maus für die Züge des
      * Menschen.
      *
+     * @param displayData   Entspricht der Spiellogik.
      * @see                 #addHorizontalIndexes()
      * @see                 #addVerticalIndexes()
-     * @see                 #addFields()
+     * @see                 #addFields(DisplayData)
      */
-    GameBoard() {
+    GameBoard(DisplayData displayData) {
+        fields = new Field[Board.SIZE][Board.SIZE];
+        displayData.addObserver(this);
         GridBagLayout gridBagLayout = new GridBagLayout();
         gridBagLayout.columnWeights = new double[]{0.0, 1.0};
         gridBagLayout.rowWeights = new double[]{0.0, 1.0};
@@ -43,23 +56,50 @@ class GameBoard extends JPanel {
 
         addHorizontalIndexes();
         addVerticalIndexes();
-        addFields();
+        addFields(displayData);
+    }
+
+    /**
+     * Updatet die visuelle Darstellung des Spielfeldes.
+     *
+     * @param o                             Entspricht der Spiellogik.
+     * @throws IllegalArgumentException     Wird geworfen, falls {@code o}
+     *                                      {@code null} ist, oder kein Objekt
+     *                                      von {@code DisplayData}.
+     * @see                                 #setPlayerOfField(int, int, Player)
+     */
+    @Override
+    public void update(Observable o) {
+        if (o instanceof DisplayData) {
+            for (int i = 1; i <= Board.SIZE; i++) {
+                for (int u = 1; u <= Board.SIZE; u++) {
+                    Player playerOfSlot = ((DisplayData) o).getSlot(i, u);
+                    setPlayerOfField(i, u, playerOfSlot);
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("Observable is illegal!");
+        }
     }
 
     /**
      * Erzeugt alle Spielfelder und fügt diese dem Spielbrett hinzu.
      *
+     * @param displayData   Entspricht der Spiellogik.
      * @see                 #createGridBagConstraints(int[])
+     * @see                 #initializeFields()
      */
-    private void addFields() {
+    private void addFields(DisplayData displayData) {
         final int rightBorder = 8;
         JPanel gameBoard = new JPanel(new GridLayout(Board.SIZE, Board.SIZE));
-        MouseAdapter fieldMouseAdapter = new FieldMouseAdapter();
-        for (int i = 0; i < Board.SIZE; i++) {
-            for (int u = 0; u < Board.SIZE; u++) {
-                gameBoard.add(new Field(i + 1, u + 1, fieldMouseAdapter));
+        MouseAdapter fieldMouseAdapter = new FieldMouseAdapter(displayData);
+        for (int i = 1; i <= Board.SIZE; i++) {
+            for (int u = 1; u <= Board.SIZE; u++) {
+                fields[i - 1][u - 1] = new Field(i, u, fieldMouseAdapter);
+                gameBoard.add(fields[i - 1][u - 1]);
             }
         }
+        initializeFields();
 
         int[] parametersForGridBag = {1, 1, 0, 0, 0, rightBorder};
         add(gameBoard, createGridBagConstraints(parametersForGridBag));
@@ -138,6 +178,59 @@ class GameBoard extends JPanel {
     }
 
     /**
+     * Initialisiert das Spielfeld, indem die Steine der Anfangsspielsituation
+     * visuell dargestellt werden.
+     *
+     * @see         #setPlayerOfField(int, int, Player)
+     */
+    private void initializeFields() {
+        int median = Board.SIZE / 2;
+
+        setPlayerOfField(median, median, Player.MACHINE);
+        setPlayerOfField(median, median + 1, Player.HUMAN);
+        setPlayerOfField(median + 1, median, Player.HUMAN);
+        setPlayerOfField(median + 1, median + 1, Player.MACHINE);
+    }
+
+    /**
+     * Teilt dem Feld mit der Position ({@code row}, {@code col}) mit, dass
+     * nun {@code playerOfField} seinen Stein auf das Feld gesetzt hat,
+     * bzw bei {@code null} nun kein Stein mehr auf dem Feld liegt.
+     *
+     * @param row               Entspricht der Zeile des Feldes.
+     * @param col               Entspricht der Spalte des Feldes.
+     * @param playerOfField     Entspricht dem Spieler, der auf das Feld seinen
+     *                          Stein gesetzt hat, wobei {@code null} für
+     *                          keinen Stein steht.
+     * @see                     Field#setColorOfStone(Color)
+     */
+    private void setPlayerOfField(int row, int col, Player playerOfField) {
+        assert row > 0 && row <= Board.SIZE : "The row is illegal!";
+        assert col > 0 && col <= Board.SIZE : "The col is illegal!";
+
+        if (playerOfField != null) {
+            fields[row - 1][col - 1]
+                    .setColorOfStone(playerOfField.getColorOfPlayer());
+        } else {
+            fields[row - 1][col - 1].setColorOfStone(null);
+        }
+    }
+
+    /**
+     * Gibt eine Informationsmeldung aus.
+     *
+     * @param message       Entspricht dem Text, der in der Meldung ausgegeben
+     *                      werden soll.
+     */
+    private void showJOptionPane(String message) {
+        assert message != null : "Message cannot be null!";
+
+        JOptionPane.showMessageDialog(null, message,
+                "Information Message", JOptionPane.INFORMATION_MESSAGE);
+        getTopLevelAncestor().setFocusable(true);
+    }
+
+    /**
      * Entspricht einem {@code MouseAdapter}, der das Ziehen des Menschen
      * durch einen Mausklick auf ein Feld ermöglicht, wobei ein Objekt für
      * alle Felder ausreicht.
@@ -153,9 +246,11 @@ class GameBoard extends JPanel {
         /**
          * Kreiert einen MouseAdapter für das Feld des Spielbretts, der für
          * die Mausinteraktion zuständig ist.
+         *
+         * @param displayData   Entspricht der Spiellogik.
          */
-        private FieldMouseAdapter() {
-            displayData = DisplayData.getInstance();
+        private FieldMouseAdapter(DisplayData displayData) {
+            this.displayData = displayData;
         }
 
         /**
@@ -236,18 +331,5 @@ class GameBoard extends JPanel {
             }
             return false;
         }
-    }
-
-    /**
-     * Gibt eine Informationsmeldung aus.
-     *
-     * @param message       Entspricht dem Text, der in der Meldung ausgegeben
-     *                      werden soll.
-     */
-    private void showJOptionPane(String message) {
-        assert message != null : "Message cannot be null!";
-
-        JOptionPane.showMessageDialog(null, message,
-                "Information Message", JOptionPane.INFORMATION_MESSAGE);
     }
 }

@@ -3,6 +3,7 @@ package de.uni_passau.fim.prog2.view;
 import de.uni_passau.fim.prog2.Observer.Observable;
 import de.uni_passau.fim.prog2.Observer.Observer;
 import de.uni_passau.fim.prog2.model.DisplayData;
+import de.uni_passau.fim.prog2.model.Player;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -36,18 +37,6 @@ import java.awt.event.KeyAdapter;
 public final class ReversiGui extends JFrame implements Observer {
 
     /**
-     * Farbe des menschlichen Spielers, wobei diese für die Steine als auch
-     * für die Scoreanzeige verwendet wird.
-     */
-    static final Color HUMAN_COLOR = Color.BLUE;
-
-    /**
-     * Farbe des Maschine, wobei diese für die Steine als auch für die
-     * Scoreanzeige verwendet wird.
-     */
-    static final Color MACHINE_COLOR = Color.RED;
-
-    /**
      * Entspricht der visuellen Anzeige des menschlichen Scores.
      */
     private JLabel humanScore;
@@ -66,22 +55,21 @@ public final class ReversiGui extends JFrame implements Observer {
     /**
      * Kreiert die visuelle Darstellung des Spiels.
      *
-     * @see                 #createMenu()
-     * @see                 #addKeyShortCuts()
+     * @param displayData   Entspricht der Spiellogik.
+     * @see                 #createMenu(DisplayData)
      * @see                 GameBoard
+     * @see                 ShortCutKeyAdapter
      */
-    private ReversiGui() {
-        final int defaultHeight = 600;
-        final int defaultWidth = 600;
+    private ReversiGui(DisplayData displayData) {
         setTitle("Reversi");
         setLayout(new BorderLayout());
         Container contentPane = getContentPane();
-        contentPane.add(new GameBoard(), BorderLayout.CENTER);
-        contentPane.add(createMenu(), BorderLayout.SOUTH);
-        addKeyShortCuts();
+        contentPane.add(new GameBoard(displayData), BorderLayout.CENTER);
+        contentPane.add(createMenu(displayData), BorderLayout.SOUTH);
+        addKeyListener(new ShortCutKeyAdapter(displayData));
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(defaultWidth, defaultHeight);
+        setSize(600, 600);
         setFocusable(true);
         setVisible(true);
     }
@@ -143,11 +131,12 @@ public final class ReversiGui extends JFrame implements Observer {
     /**
      * Kreiert die visuelle Darstellung des Menü.
      *
+     * @param displayData   Entspricht der Spiellogik.
      * @see                 #createScoreJLabel(Color)
-     * @see                 #createJComboBox()
-     * @see                 #addButtons(JPanel)
+     * @see                 #createJComboBox(DisplayData)
+     * @see                 #addButtons(JPanel, DisplayData)
      */
-    private JPanel createMenu() {
+    private JPanel createMenu(DisplayData displayData) {
         final int numberOfMenuItems = 7;
         final int horizontalGap = 5;
         final int verticalBorder = 5;
@@ -155,15 +144,14 @@ public final class ReversiGui extends JFrame implements Observer {
                 horizontalGap, 0));
         menu.setBorder(new EmptyBorder(verticalBorder, 0, verticalBorder, 0));
 
-        humanScore = createScoreJLabel(ReversiGui.HUMAN_COLOR);
-        machineScore = createScoreJLabel(ReversiGui.MACHINE_COLOR);
-        DisplayData displayData = DisplayData.getInstance();
+        humanScore = createScoreJLabel(Player.HUMAN.getColorOfPlayer());
+        machineScore = createScoreJLabel(Player.MACHINE.getColorOfPlayer());
         updateScores(displayData);
         displayData.addObserver(this);
 
         menu.add(humanScore);
-        menu.add(createJComboBox());
-        addButtons(menu);
+        menu.add(createJComboBox(displayData));
+        addButtons(menu, displayData);
         menu.add(machineScore);
         return menu;
     }
@@ -172,18 +160,13 @@ public final class ReversiGui extends JFrame implements Observer {
      * Fügt die {@code JButtons} des Menüs hinzu.
      *
      * @param menu              Entspricht dem gesamten Menü.
+     * @param displayData       Entspricht der Spiellogik.
      */
-    private void addButtons(JPanel menu) {
+    private void addButtons(JPanel menu, DisplayData displayData) {
         assert menu != null : "The menu to add cannot be null!";
 
         JButton createNewGame = new JButton("<HTML><U>N</U>ew</HTML>");
         createNewGame.addActionListener(new ActionListener() {
-
-            /**
-             * Entspricht der Spiellogik, auf die zugriffen werden muss,
-             * falls ein neues Spiel gestartet wird.
-             */
-            private DisplayData displayData = DisplayData.getInstance();
 
             /**
              * Benachrichtigt die Spiellogik ein neues Spiel zu eröffnen.
@@ -200,13 +183,6 @@ public final class ReversiGui extends JFrame implements Observer {
 
         JButton switchPlayerOrder = new JButton("<HTML><U>S</U>witch</HTML>");
         switchPlayerOrder.addActionListener(new ActionListener() {
-
-            /**
-             * Entspricht der Spiellogik, auf die zugriffen werden muss,
-             * falls der Eröffner gewechselt und ein neues Spiel gestartet
-             * wird.
-             */
-            private DisplayData displayData = DisplayData.getInstance();
 
             /**
              * Benachrichtigt die Spiellogik den Eröffner zu wechseln und
@@ -227,12 +203,6 @@ public final class ReversiGui extends JFrame implements Observer {
         undo.addActionListener(new ActionListener() {
 
             /**
-             * Entspricht der Spiellogik, auf die zugriffen werden muss,
-             * falls ein Spielzug zurückgesetzt wird.
-             */
-            private DisplayData displayData = DisplayData.getInstance();
-
-            /**
              * Benachrichtigt die Spiellogik einen Zug des menschlichen
              * Spieler rückgängig zu machen, falls dieser bereits gezogen ist.
              *
@@ -242,8 +212,7 @@ public final class ReversiGui extends JFrame implements Observer {
              */
             @Override
             public void actionPerformed(ActionEvent e) {
-                assert displayData.undoIsPossible() : "Undo should be disabled"
-                        + " otherwise!";
+                assert displayData.undoIsPossible() : "Undo has to be disabled";
 
                 displayData.undo();
             }
@@ -252,6 +221,7 @@ public final class ReversiGui extends JFrame implements Observer {
 
         JButton quit = new JButton("<HTML><U>Q</U>uit</HTML>");
         quit.addActionListener(new ActionListener() {
+
             /**
              * Beendet das Spiel.
              *
@@ -268,20 +238,15 @@ public final class ReversiGui extends JFrame implements Observer {
     /**
      * Kreiert die Levelauswahl als {@code JComboBox}.
      *
+     * @param displayData   Entspricht der Spiellogik.
      * @return              Gibt die erzeugte {@code JComboBox} zurück.
      */
-    private JComboBox createJComboBox() {
+    private JComboBox createJComboBox(DisplayData displayData) {
         final int defaultLevel = 3;
         Integer[] itemsOfJComboBox = {1, 2, 3, 4, 5, 6, 7, 8};
         JComboBox jComboBox = new JComboBox<>(itemsOfJComboBox);
         jComboBox.setSelectedItem(defaultLevel);
         jComboBox.addActionListener(new ActionListener() {
-
-            /**
-             * Entspricht der Spiellogik, auf die zugriffen werden muss,
-             * wenn das Level verändert wird.
-             */
-            private DisplayData displayData = DisplayData.getInstance();
 
             /**
              * Setzt das Level auf einen positiven Wert.
@@ -316,75 +281,146 @@ public final class ReversiGui extends JFrame implements Observer {
     }
 
     /**
-     * Fügt die Tastatureingabe zu dem {@code JFrame} hinzu.
+     * Ermöglicht die Eingabe der Tastaturkombinationen, wobei eine Verzögerung
+     * von 0,5 Sekunden unterstützt wird, um eine angenehmere Benutzung zu
+     * gewährleisten.
      */
-    private void addKeyShortCuts() {
-        addKeyListener(new KeyAdapter() {
+    private class ShortCutKeyAdapter extends KeyAdapter {
 
-            /**
-             * Entspricht der Spiellogik, auf die zugegriffen werden muss, um
-             * die Operationen auszuführen.
-             */
-            private DisplayData displayData = DisplayData.getInstance();
+        /**
+         * Speichert, ob momentan die ALT-Taste gedrückt ist.
+         */
+        private boolean altIsPressed;
 
-            /**
-             * Speichert, ob momentan die ALT-Taste gedrückt ist.
-             */
-            private boolean altIsPressed;
+        /**
+         * Speichert, ob momentan die n-Taste gedrückt ist.
+         */
+        private boolean nIsPressed;
 
-            /**
-             * Wenn eine Taste gedrückt wird, wird überprüft, ob ebenfalls
-             * die ALT-Taste gedrückt wird und darauf wird die jeweilige
-             * Operation ausgeführt. Speichert ebenfalls, ob die ALT-Taste
-             * gedrückt wird.
-             *
-             * @param e     Entspricht der auslösenden Taste.
-             * @see         DisplayData#createNewBoard()
-             * @see         DisplayData#switchPlayerOrder()
-             * @see         DisplayData#undo()
-             */
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-                int keyCode = e.getKeyCode();
+        /**
+         * Speichert, ob momentan die s-Taste gedrückt ist.
+         */
+        private boolean sIsPressed;
 
-                if (keyCode == KeyEvent.VK_ALT) {
-                    altIsPressed = true;
-                } else if (altIsPressed) {
-                    switch (keyCode) {
-                    case KeyEvent.VK_N:
-                        displayData.createNewBoard();
-                        break;
-                    case KeyEvent.VK_S:
-                        displayData.switchPlayerOrder();
-                        break;
-                    case KeyEvent.VK_U:
-                        if (displayData.undoIsPossible()) {
-                            displayData.undo();
-                        }
-                        break;
-                    case KeyEvent.VK_Q:
-                        dispose();
-                        break;
-                    default:
-                        break;
-                    }
+        /**
+         * Speichert, ob momentan die u-Taste gedrückt ist.
+         */
+        private boolean uIsPressed;
+
+        /**
+         * Speichert, ob momentan die q-Taste gedrückt ist.
+         */
+        private boolean qIsPressed;
+
+        /**
+         * Entspricht der Systemzeit der letzten Nutzung einer
+         * Tastenkombination.
+         */
+        private long lastUsage;
+
+        /**
+         * Entspricht der minimalen Pausenzeit der Tastenkombinationen,
+         * um eine komfortable Bedienung zu garantieren.
+         */
+        private long minimumDelay = 500_000_000;
+
+        /**
+         * Die Spiellogik wird für die Operationen der Tastenkombinationen
+         * benötigt.
+         */
+        private DisplayData displayData;
+
+        /**
+         * Erstellt den KeyAdapter, der die Tastenkombinationen des Spiels
+         * ermöglicht.
+         *
+         * @param displayData       Die Spiellogik wird für die Folgen der
+         *                          Tastenkombinationen benötigt.
+         */
+        private ShortCutKeyAdapter(DisplayData displayData) {
+            this.displayData = displayData;
+        }
+
+        /**
+         * Wenn eine Taste gedrückt wird, wird überprüft, ob ebenfalls
+         * die ALT-Taste gedrückt wird und darauf wird die jeweilige
+         * Operation ausgeführt. Es wird ebenfalls gespeichert, ob eine
+         * Taste momentan gedrückt wird.
+         *
+         * @param e     Entspricht der auslösenden Taste.
+         * @see         #setButtonPressed(int, boolean)
+         * @see         #checkBothButtonPressed()
+         */
+        @Override
+        public void keyPressed(KeyEvent e) {
+            super.keyPressed(e);
+            setButtonPressed(e.getKeyCode(), true);
+            checkBothButtonPressed();
+        }
+
+        /**
+         * Wird benötigt, um zu speichern, ob eine der Tasten noch gedrückt
+         * wird.
+         *
+         * @param e     Entspricht der auslösenden Taste.
+         * @see         #setButtonPressed(int, boolean)
+         */
+        @Override
+        public void keyReleased(KeyEvent e) {
+            super.keyReleased(e);
+            setButtonPressed(e.getKeyCode(), false);
+        }
+
+        /**
+         * Prüft, ob die Verzögerung vorbei ist und ob jew einer der Tasten mit
+         * der Alt-Taste gedrückt wird und führt dann die Operation aus.
+         */
+        private void checkBothButtonPressed() {
+            if (System.nanoTime() - lastUsage > minimumDelay &&
+                    altIsPressed) {
+                if (nIsPressed) {
+                    displayData.createNewBoard();
+                    lastUsage = System.nanoTime();
+                } else if (sIsPressed) {
+                    displayData.switchPlayerOrder();
+                    lastUsage = System.nanoTime();
+                } else if (uIsPressed && displayData.undoIsPossible()) {
+                    displayData.undo();
+                    lastUsage = System.nanoTime();
+                } else if (qIsPressed) {
+                    dispose();
                 }
             }
+        }
 
-            /**
-             * Wird benötigt, um zu speichern, ob die ALT-Taste gedrückt wird.
-             *
-             * @param e     Entspricht der auslösenden Taste.
-             */
-            @Override
-            public void keyReleased(KeyEvent e) {
-                super.keyReleased(e);
-                if (e.getKeyCode() == KeyEvent.VK_ALT) {
-                    altIsPressed = false;
-                }
+        /**
+         * Setzt, ob die jew Taste noch gedrückt wird oder nicht.
+         *
+         * @param keyCode       Entspricht der Taste.
+         * @param pressed       Entspricht einem Flag, ob die Taste noch
+         *                      gedrückt wird.
+         */
+        private void setButtonPressed(int keyCode, boolean pressed) {
+            switch (keyCode) {
+                case KeyEvent.VK_N:
+                    nIsPressed = pressed;
+                    break;
+                case KeyEvent.VK_S:
+                    sIsPressed = pressed;
+                    break;
+                case KeyEvent.VK_U:
+                    uIsPressed = pressed;
+                    break;
+                case KeyEvent.VK_Q:
+                    qIsPressed = pressed;
+                    break;
+                case KeyEvent.VK_ALT:
+                    altIsPressed = pressed;
+                    break;
+                default:
+                    break;
             }
-        });
+        }
     }
 
     /**
@@ -396,7 +432,7 @@ public final class ReversiGui extends JFrame implements Observer {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new ReversiGui();
+                new ReversiGui(new DisplayData());
             }
         });
     }

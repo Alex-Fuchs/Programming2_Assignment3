@@ -6,18 +6,14 @@ import java.util.Stack;
 
 /**
  * Entspricht dem Vermittler zwischen {@code Board} und der View mit dem
- * Controller. Die Klasse implementiert das Interface {@code Observable}
- * und benutzt das Design-Pattern Singleton, damit sowohl {@code ReversiGui}
- * und {@code Field} sich als {@code Observer} registrieren können, und der
- * gesamte Controller darauf zugreifen kann, ohne ständig das Objekt in
- * Methoden bzw Konstruktoren übergeben zu müssen.
+ * Controller. Die Klasse implementiert das Interface {@code Observable}.
+ * Zusätzlich wurde eine Undo Funktion hinzugefügt, die den letzten Spielzug
+ * des Menschen rückgängig macht.
  *
  * @version 15.01.20
  * @author -----
  */
 public final class DisplayData extends Observable {
-
-    private static DisplayData ourInstance = new DisplayData();
 
     /**
      * Entspricht allen Spielzügen seit Spielstart.
@@ -30,20 +26,8 @@ public final class DisplayData extends Observable {
      *
      * @see     #createNewStack(Player)
      */
-    private DisplayData() {
-        assert ourInstance == null : "DisplayData already exists!";
-
+    public DisplayData() {
         boards = createNewStack(Player.HUMAN);
-    }
-
-    /**
-     * Gibt die statische Instanz des Singleton Design-Pattern zurück, die
-     * auch die einzige Spiellogik darstellt.
-     *
-     * @return      Entspricht dem einzigen Objekt von {@code DisplayData}.
-     */
-    public static DisplayData getInstance() {
-        return ourInstance;
     }
 
     /**
@@ -95,13 +79,11 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Führt einen Zug der Maschine aus, falls diese an der Reihe ist und das
-     * Spiel nicht vorbei ist und benachrichtigt die View.
+     * Führt einen Zug der Maschine aus, falls diese an der Reihe ist und
+     * das Spiel nicht vorbei ist und benachrichtigt die View, wobei die
+     * Berechnungen der Maschine von einem anderen Thread berechnet werden.
      *
-     * @see     #isGameOver()
-     * @see     #next()
      * @see     #updateObserver()
-     * @see     Board#machineMove()
      */
     public void machineMove() {
         assert boards.peek() != null : "Illegal state of DisplayData";
@@ -109,9 +91,9 @@ public final class DisplayData extends Observable {
         if (!isGameOver()) {
             if (next() == Player.MACHINE) {
                 boards.push(boards.peek().machineMove());
-                updateObserver();
             }
         }
+        updateObserver();
     }
 
     /**
@@ -135,7 +117,9 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Setzt das Level, falls dieses positiv ist.
+     * Setzt das Level, falls {@code level} positiv ist, wobei zu beachten ist,
+     * dass das Level sich nach {@link #undo()} nicht zurücksetzt und alle
+     * zukünftigen Spiele in dem selben Level eingestellt sind.
      *
      * @param level                         Entspricht dem neuen Level.
      * @throws IllegalArgumentException     Wird geworfen, falls {@code level}
