@@ -5,10 +5,11 @@ import de.uni_passau.fim.prog2.Observer.Observable;
 import java.util.Stack;
 
 /**
- * Entspricht dem Vermittler zwischen {@code Board} und der View mit dem
- * Controller. Die Klasse implementiert das Interface {@code Observable}.
- * Zusätzlich wurde eine Undo Funktion hinzugefügt, die den letzten Spielzug
- * des Menschen rückgängig macht.
+ * Entspricht dem Vermittler zwischen {@code Board} und Controller. Die Klasse
+ * implementiert das Interface {@code Observable}, damit die View bei
+ * Änderungen benachrichtigt wird. Zusätzlich wurde eine Undo Funktion
+ * hinzugefügt, die den letzten Spielzug des Menschen rückgängig macht, falls
+ * dieser bereits gezogen ist.
  *
  * @version 15.01.20
  * @author -----
@@ -33,8 +34,6 @@ public final class DisplayData extends Observable {
     /**
      * Löscht das momentane Spiel und startet ein neues Spiel mit den gleichen
      * Spieleinstellungen und updatet die View.
-     *
-     * @see     #updateObserver()
      */
     public void createNewBoard() {
         assert boards.peek() != null : "Illegal state of DisplayData";
@@ -83,7 +82,9 @@ public final class DisplayData extends Observable {
      * das Spiel nicht vorbei ist und benachrichtigt die View, wobei die
      * Berechnungen der Maschine von einem anderen Thread berechnet werden.
      *
-     * @see     #updateObserver()
+     * @see         #isGameOver()
+     * @see         #next()
+     * @see         Board#machineMove()
      */
     public void machineMove() {
         assert boards.peek() != null : "Illegal state of DisplayData";
@@ -135,6 +136,8 @@ public final class DisplayData extends Observable {
     /**
      * Tauscht den Eröffner und startet ein neues Spiel und benachrichtigt die
      * View.
+     *
+     * @see         #createNewStack(Player)
      */
     public void switchPlayerOrder() {
         assert boards.peek() != null : "Illegal state of DisplayData";
@@ -266,6 +269,9 @@ public final class DisplayData extends Observable {
 
     /**
      * Setzt den Zustand auf verändert und updatet alle {@code Observer}.
+     *
+     * @see         #setChanged()
+     * @see         #notifyObserver()
      */
     private void updateObserver() {
         setChanged();

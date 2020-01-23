@@ -23,7 +23,7 @@ import java.awt.event.MouseEvent;
 /**
  * Implementiert die visuelle Darstellung des Spielbretts inkl aller Indexe an
  * den Spielbrettseiten und ermöglicht Mausinteraktionen mit dem Spielbrett.
- * Die Klasse implementiert das Inteface {@code Observer}, um von der
+ * Die Klasse implementiert das Interface {@code Observer}, um von der
  * Spiellogik bei Änderungen benachrichtigt werden zu können.
  *
  * @version 15.01.20
@@ -47,13 +47,15 @@ class GameBoard extends JPanel implements Observer {
      * @see                 #addFields(DisplayData)
      */
     GameBoard(DisplayData displayData) {
-        fields = new Field[Board.SIZE][Board.SIZE];
-        displayData.addObserver(this);
+        assert displayData != null : "DisplayData cannot be null!";
+
         GridBagLayout gridBagLayout = new GridBagLayout();
         gridBagLayout.columnWeights = new double[]{0.0, 1.0};
         gridBagLayout.rowWeights = new double[]{0.0, 1.0};
         setLayout(gridBagLayout);
 
+        fields = new Field[Board.SIZE][Board.SIZE];
+        displayData.addObserver(this);
         addHorizontalIndexes();
         addVerticalIndexes();
         addFields(displayData);
@@ -62,11 +64,13 @@ class GameBoard extends JPanel implements Observer {
     /**
      * Updatet die visuelle Darstellung des Spielfeldes.
      *
-     * @param o                             Entspricht der Spiellogik.
+     * @param o                             Entspricht der Spiellogik, von der
+     *                                      Informationen benötigt werden.
      * @throws IllegalArgumentException     Wird geworfen, falls {@code o}
      *                                      {@code null} ist, oder kein Objekt
      *                                      von {@code DisplayData}.
      * @see                                 #setPlayerOfField(int, int, Player)
+     * @see                                 DisplayData#getSlot(int, int)
      */
     @Override
     public void update(Observable o) {
@@ -88,8 +92,11 @@ class GameBoard extends JPanel implements Observer {
      * @param displayData   Entspricht der Spiellogik.
      * @see                 #createGridBagConstraints(int[])
      * @see                 #initializeFields()
+     * @see                 FieldMouseAdapter
      */
     private void addFields(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
+
         final int rightBorder = 8;
         JPanel gameBoard = new JPanel(new GridLayout(Board.SIZE, Board.SIZE));
         MouseAdapter fieldMouseAdapter = new FieldMouseAdapter(displayData);
@@ -217,7 +224,9 @@ class GameBoard extends JPanel implements Observer {
     }
 
     /**
-     * Gibt eine Informationsmeldung aus.
+     * Gibt eine Informationsmeldung aus und setzt den Fokus wieder auf
+     * {@code ReversiGui}, damit weiterhin die Tastenkombinationen
+     * funktionieren.
      *
      * @param message       Entspricht dem Text, der in der Meldung ausgegeben
      *                      werden soll.
@@ -232,8 +241,8 @@ class GameBoard extends JPanel implements Observer {
 
     /**
      * Entspricht einem {@code MouseAdapter}, der das Ziehen des Menschen
-     * durch einen Mausklick auf ein Feld ermöglicht, wobei ein Objekt für
-     * alle Felder ausreicht.
+     * durch einen Mausklick auf ein Feld ermöglicht, wobei lediglich ein
+     * Objekt für alle Felder verwendet wird.
      */
     private final class FieldMouseAdapter extends MouseAdapter {
 
@@ -247,9 +256,12 @@ class GameBoard extends JPanel implements Observer {
          * Kreiert einen MouseAdapter für das Feld des Spielbretts, der für
          * die Mausinteraktion zuständig ist.
          *
-         * @param displayData   Entspricht der Spiellogik.
+         * @param displayData   Entspricht der Spiellogik, auf die bei einem
+         *                      Mausklick zugegriffen werden muss.
          */
         private FieldMouseAdapter(DisplayData displayData) {
+            assert displayData != null : "DisplayData cannot be null!";
+
             this.displayData = displayData;
         }
 
@@ -272,8 +284,7 @@ class GameBoard extends JPanel implements Observer {
             if (displayData.move(field.getRow(), field.getCol())) {
                 if (!checkGameOver() && !checkMissTurn(Player.HUMAN)) {
                     displayData.machineMove();
-                    while (!checkGameOver()
-                            && checkMissTurn(Player.MACHINE)) {
+                    while (!checkGameOver() && checkMissTurn(Player.MACHINE)) {
                         displayData.machineMove();
                     }
                 }

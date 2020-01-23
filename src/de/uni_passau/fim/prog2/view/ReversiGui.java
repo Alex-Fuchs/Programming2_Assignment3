@@ -55,19 +55,22 @@ public final class ReversiGui extends JFrame implements Observer {
     /**
      * Kreiert die visuelle Darstellung des Spiels.
      *
-     * @param displayData   Entspricht der Spiellogik.
+     * @param displayData   Entspricht der Spiellogik, die sowohl die
+     *                      Controller als auch die Observer benötigen.
      * @see                 #createMenu(DisplayData)
      * @see                 GameBoard
      * @see                 ShortCutKeyAdapter
      */
     private ReversiGui(DisplayData displayData) {
-        setTitle("Reversi");
+        assert displayData != null : "DisplayData cannot be null!";
+
         setLayout(new BorderLayout());
         Container contentPane = getContentPane();
         contentPane.add(new GameBoard(displayData), BorderLayout.CENTER);
         contentPane.add(createMenu(displayData), BorderLayout.SOUTH);
         addKeyListener(new ShortCutKeyAdapter(displayData));
 
+        setTitle("Reversi");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(600, 600);
         setFocusable(true);
@@ -78,7 +81,8 @@ public final class ReversiGui extends JFrame implements Observer {
      * Updatet die visuelle Darstellung der Scores und updatet die
      * Verfügbarkeit von {@code undo}.
      *
-     * @param o                             Entspricht der Spiellogik.
+     * @param o                             Entspricht der Spiellogik, von
+     *                                      der Informationen benötigt werden.
      * @throws IllegalArgumentException     Wird geworfen, falls {@code o}
      *                                      {@code null} ist, oder kein Objekt
      *                                      von {@code DisplayData}.
@@ -99,7 +103,8 @@ public final class ReversiGui extends JFrame implements Observer {
     /**
      * Update die visuelle Darstellung der Scores.
      *
-     * @param displayData   Entspricht der Spiellogik.
+     * @param displayData   Entspricht der Spiellogik, von der die aktuellen
+     *                      Scores benötigt werden.
      * @see                 DisplayData#getNumberOfHumanTiles()
      * @see                 DisplayData#getNumberOfMachineTiles()
      */
@@ -113,9 +118,10 @@ public final class ReversiGui extends JFrame implements Observer {
     }
 
     /**
-     * Update die Verfügbarkeit von {@code undo}.
+     * Updatet die Verfügbarkeit von {@code undo}.
      *
-     * @param displayData   Entspricht der Spiellogik.
+     * @param displayData   Entspricht der Spiellogik, von der die
+     *                      Verfügbarkeit von Undo geprüft werden muss.
      * @see                 DisplayData#undoIsPossible()
      */
     private void updateUndo(DisplayData displayData) {
@@ -131,17 +137,20 @@ public final class ReversiGui extends JFrame implements Observer {
     /**
      * Kreiert die visuelle Darstellung des Menü.
      *
-     * @param displayData   Entspricht der Spiellogik.
+     * @param displayData   Entspricht der Spiellogik, die auf Interaktionen
+     *                      im Menü reagieren muss.
      * @see                 #createScoreJLabel(Color)
      * @see                 #createJComboBox(DisplayData)
      * @see                 #addButtons(JPanel, DisplayData)
      */
     private JPanel createMenu(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
+
         final int numberOfMenuItems = 7;
         final int horizontalGap = 5;
         final int verticalBorder = 5;
-        JPanel menu = new JPanel(new GridLayout(1, numberOfMenuItems,
-                horizontalGap, 0));
+        JPanel menu = new JPanel(
+                new GridLayout(1, numberOfMenuItems, horizontalGap, 0));
         menu.setBorder(new EmptyBorder(verticalBorder, 0, verticalBorder, 0));
 
         humanScore = createScoreJLabel(Player.HUMAN.getColorOfPlayer());
@@ -160,10 +169,13 @@ public final class ReversiGui extends JFrame implements Observer {
      * Fügt die {@code JButtons} des Menüs hinzu.
      *
      * @param menu              Entspricht dem gesamten Menü.
-     * @param displayData       Entspricht der Spiellogik.
+     * @param displayData       Entspricht der Spiellogik, die auf die
+     *                          Interaktion mit den {@code JButton} reagieren
+     *                          muss.
      */
     private void addButtons(JPanel menu, DisplayData displayData) {
         assert menu != null : "The menu to add cannot be null!";
+        assert displayData != null : "DisplayData cannot be null!";
 
         JButton createNewGame = new JButton("<HTML><U>N</U>ew</HTML>");
         createNewGame.addActionListener(new ActionListener() {
@@ -238,10 +250,13 @@ public final class ReversiGui extends JFrame implements Observer {
     /**
      * Kreiert die Levelauswahl als {@code JComboBox}.
      *
-     * @param displayData   Entspricht der Spiellogik.
+     * @param displayData   Entspricht der Spiellogik, der das neue Level
+     *                      mitgeteilt werden muss.
      * @return              Gibt die erzeugte {@code JComboBox} zurück.
      */
     private JComboBox createJComboBox(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
+
         final int defaultLevel = 3;
         Integer[] itemsOfJComboBox = {1, 2, 3, 4, 5, 6, 7, 8};
         JComboBox jComboBox = new JComboBox<>(itemsOfJComboBox);
@@ -281,9 +296,9 @@ public final class ReversiGui extends JFrame implements Observer {
     }
 
     /**
-     * Ermöglicht die Eingabe der Tastaturkombinationen, wobei eine Verzögerung
-     * von 0,5 Sekunden unterstützt wird, um eine angenehmere Benutzung zu
-     * gewährleisten.
+     * Ermöglicht die Eingabe der Tastaturkombinationen anstatt die Button zu
+     * benutzen, wobei eine Pausenzeit von 0,5 Sekunden eingebaut wurde, um
+     * eine angenehmere Benutzung zu gewährleisten.
      */
     private class ShortCutKeyAdapter extends KeyAdapter {
 
@@ -319,12 +334,6 @@ public final class ReversiGui extends JFrame implements Observer {
         private long lastUsage;
 
         /**
-         * Entspricht der minimalen Pausenzeit der Tastenkombinationen,
-         * um eine komfortable Bedienung zu garantieren.
-         */
-        private long minimumDelay = 500_000_000;
-
-        /**
          * Die Spiellogik wird für die Operationen der Tastenkombinationen
          * benötigt.
          */
@@ -332,12 +341,14 @@ public final class ReversiGui extends JFrame implements Observer {
 
         /**
          * Erstellt den KeyAdapter, der die Tastenkombinationen des Spiels
-         * ermöglicht.
+         * realisiert.
          *
          * @param displayData       Die Spiellogik wird für die Folgen der
          *                          Tastenkombinationen benötigt.
          */
         private ShortCutKeyAdapter(DisplayData displayData) {
+            assert displayData != null : "DisplayData cannot be null!";
+
             this.displayData = displayData;
         }
 
@@ -372,12 +383,19 @@ public final class ReversiGui extends JFrame implements Observer {
         }
 
         /**
-         * Prüft, ob die Verzögerung vorbei ist und ob jew einer der Tasten mit
-         * der Alt-Taste gedrückt wird und führt dann die Operation aus.
+         * Prüft, ob die Verzögerung einer halben Sekunde vorbei ist und
+         * ob jew einer der Tasten mit der Alt-Taste gedrückt wird und führt
+         * dann die Operation aus.
+         *
+         * @see         DisplayData#createNewStack(Player)
+         * @see         DisplayData#switchPlayerOrder()
+         * @see         DisplayData#undoIsPossible()
+         * @see         DisplayData#undo()
          */
         private void checkBothButtonPressed() {
-            if (System.nanoTime() - lastUsage > minimumDelay &&
-                    altIsPressed) {
+            final long minimumDelay = 500_000_000;
+            if (System.nanoTime() - lastUsage > minimumDelay
+                    && altIsPressed) {
                 if (nIsPressed) {
                     displayData.createNewBoard();
                     lastUsage = System.nanoTime();
@@ -394,7 +412,7 @@ public final class ReversiGui extends JFrame implements Observer {
         }
 
         /**
-         * Setzt, ob die jew Taste noch gedrückt wird oder nicht.
+         * Setzt, ob eine Taste noch gedrückt wird oder nicht.
          *
          * @param keyCode       Entspricht der Taste.
          * @param pressed       Entspricht einem Flag, ob die Taste noch

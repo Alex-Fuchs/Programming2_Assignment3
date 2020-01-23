@@ -9,24 +9,13 @@ import java.awt.Color;
 import java.awt.event.MouseAdapter;
 
 /**
- * Implementiert der visuellen Darstellung eines Feldes, auf das ein Stein
+ * Implementiert die visuelle Darstellung eines Feldes, auf das ein Stein
  * gesetzt werden kann.
  *
  * @version 15.01.20
  * @author -----
  */
 class Field extends JPanel {
-
-    /**
-     * Entspricht der Hintergrundfarbe eines Feldes, die für alle Objekte
-     * immer gleich ist.
-     */
-    private static final Color FIELD_COLOR = new Color(0, 180, 0);
-
-    /**
-     * Entspricht dem Abstand von der Feldlinie zum Steinrand.
-     */
-    private static final int BORDER_OF_STONE = 10;
 
     /**
      * Entspricht der Zeile des Feldes auf dem Spielbrett, wobei nord-westlich
@@ -52,26 +41,29 @@ class Field extends JPanel {
      *
      * @param row               Entspricht der Zeile des Feldes.
      * @param col               Entspricht der Zeile des Feldes.
-     * @param mouseAdapter      Ermöglicht das Zeihen durch Mausklick.
+     * @param mouseAdapter      Ermöglicht das Ziehen durch Mausklick.
      */
     Field(int row, int col, MouseAdapter mouseAdapter) {
         assert row > 0 && row <= Board.SIZE : "Row is illegal!";
         assert col > 0 && col <= Board.SIZE : "Col is illegal!";
         assert mouseAdapter != null : "MouseAdapter cannot be null!";
 
+        final Color fieldColor = new Color(0, 180, 0);
         this.row = row;
         this.col = col;
         addMouseListener(mouseAdapter);
-        setBackground(FIELD_COLOR);
+        setBackground(fieldColor);
     }
 
     /**
      * Falls {@code colorOfStone} {@code null} entspricht, liegt nun kein Stein
-     * mehr auf dem Feld, andernfalls wird die Farbe des Steines entsprechend
-     * gesetzt.
+     * mehr auf dem Feld, andernfalls wird die Farbe des Steines dem Spieler
+     * entsprechend gesetzt. Falls sich etwas geändert hat, wird das Feld
+     * inkl Stein neu gezeichnet.
      *
      * @param colorOfStone      Entspricht der Farbe des Steines, falls dieser
      *                          vorhanden ist, ansonsten {@code null}.
+     * @see                     #repaint()
      */
     void setColorOfStone(Color colorOfStone) {
         if (this.colorOfStone != colorOfStone) {
@@ -83,7 +75,7 @@ class Field extends JPanel {
     /**
      * Gibt die Zeile des Feldes zurück.
      *
-     * @return      Entspricht der Zeile zwischen {@code 1} und
+     * @return      Entspricht einer Zeile zwischen {@code 1} und
      *              {@code Board.SIZE}.
      */
     int getRow() {
@@ -93,7 +85,7 @@ class Field extends JPanel {
     /**
      * Gibt die Spalte des Feldes zurück.
      *
-     * @return      Entspricht der Spalte zwischen {@code 1} und
+     * @return      Entspricht einer Spalte zwischen {@code 1} und
      *              {@code Board.SIZE}.
      */
     int getCol() {
@@ -141,9 +133,10 @@ class Field extends JPanel {
     private void drawStone(Graphics2D graphics) {
         assert colorOfStone != null : "Color of Stone cannot be null!";
 
+        final int distanceToBorder = 7;
         graphics.setColor(colorOfStone);
-        graphics.fillOval(BORDER_OF_STONE, BORDER_OF_STONE,
-                getWidth() - BORDER_OF_STONE * 2,
-                getHeight() - BORDER_OF_STONE * 2);
+        graphics.fillOval(distanceToBorder, distanceToBorder,
+                getWidth() - distanceToBorder * 2,
+                getHeight() - distanceToBorder * 2);
     }
 }
