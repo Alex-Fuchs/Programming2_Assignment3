@@ -22,6 +22,12 @@ public final class DisplayData extends Observable {
     private Stack<Board> boards;
 
     /**
+     * Entspricht dem {@code Thread}, der den momentanen Maschinenzug berechnet,
+     * wobei dieser während einem Zug des Menschen {@code null} ist.
+     */
+    private Thread machineThread;
+
+    /**
      * Kreiert den Vermittler für die Gui mit den standard Spieleinstellungen
      * für das erste Spiel.
      *
@@ -32,15 +38,18 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Löscht das momentane Spiel und startet ein neues Spiel mit den gleichen
-     * Spieleinstellungen und updatet die View.
+     * Löscht das momentane Spiel, startet ein neues Spiel mit den gleichen
+     * Spieleinstellungen und updatet die View, wobei auch momentane
+     * Maschinenzüge abgebrochen werden.
      */
     public void createNewBoard() {
         assert boards.peek() != null : "Illegal state of DisplayData";
 
+        stopMachineThread();
+        setChanged();
         boards = createNewStack(boards.peek().getFirstPlayer());
+        notifyObserver(false);
         machineMove();
-        updateObserver();
     }
 
     /**
@@ -60,7 +69,6 @@ public final class DisplayData extends Observable {
      *                                      ist.
      * @see                                 #isGameOver()
      * @see                                 #next()
-     * @see                                 #updateObserver()
      * @see                                 Board#move(int, int)
      */
     public boolean move(int row, int col) {
@@ -69,8 +77,9 @@ public final class DisplayData extends Observable {
         if (!isGameOver() && next() == Player.HUMAN) {
             Board move = boards.peek().move(row, col);
             if (move != null) {
+                setChanged();
                 boards.push(move);
-                updateObserver();
+                notifyObserver(true);
                 return true;
             }
         }
@@ -78,23 +87,24 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Führt einen Zug der Maschine aus, falls diese an der Reihe ist und
-     * das Spiel nicht vorbei ist und benachrichtigt die View, wobei die
-     * Berechnungen der Maschine von einem anderen Thread berechnet werden.
+     * Führt die Maschinenzüge aus, bis das Spiel vorbei ist oder nun der
+     * Mensch an der Reihe ist, wobei dies von {@code MaschineThread}
+     * berechnet wird.
      *
-     * @see         #isGameOver()
-     * @see         #next()
-     * @see         Board#machineMove()
+     * @throws IllegalStateException    Wird geworfen, falls versucht wird,
+     *                                  Maschinenzüge auszuführen, obwohl diese
+     *                                  bereits momentan berechnet werden.
+     * @see                             MachineThread
      */
     public void machineMove() {
         assert boards.peek() != null : "Illegal state of DisplayData";
 
-        if (!isGameOver()) {
-            if (next() == Player.MACHINE) {
-                boards.push(boards.peek().machineMove());
-            }
+        if (machineThread == null) {
+            machineThread = new MachineThread();
+            machineThread.start();
+        } else {
+            throw new IllegalStateException("The machine is already moving!");
         }
-        updateObserver();
     }
 
     /**
@@ -134,36 +144,44 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Tauscht den Eröffner und startet ein neues Spiel und benachrichtigt die
-     * View.
+     * Tauscht den Eröffner, startet ein neues Spiel und benachrichtigt die
+     * View, wobei dadurch auch momentane Maschinenzüge abgebrochen werden.
      *
+     * @see         #stopMachineThread()
      * @see         #createNewStack(Player)
      */
     public void switchPlayerOrder() {
         assert boards.peek() != null : "Illegal state of DisplayData";
 
+        stopMachineThread();
+        setChanged();
         if (boards.peek().getFirstPlayer() == Player.HUMAN) {
             boards = createNewStack(Player.MACHINE);
+            notifyObserver(false);
             machineMove();
         } else {
             boards = createNewStack(Player.HUMAN);
+            notifyObserver(false);
         }
-        updateObserver();
     }
 
     /**
      * Setzt einen Spielzug des Menschen zurück, falls dieser bereits gezogen
-     * hat.
+     * hat, wobei dadurch ggf der momentane Maschinenzug abgebrochen wird.
      *
+     * @see         #stopMachineThread()
      * @see         #undoIsPossible()
      */
     public void undo() {
         assert boards.peek() != null : "Illegal state of DisplayData";
+        assert undoIsPossible() : "Undo should only be then called!";
 
         boolean humanMovePopped = false;
+        stopMachineThread();
         while (!humanMovePopped && undoIsPossible()) {
+            setChanged();
             boards.pop();
-            updateObserver();
+            notifyObserver(false);
             if (next() == Player.HUMAN) {
                 humanMovePopped = true;
             }
@@ -171,7 +189,7 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Gibt zurück, ob ein Undo möglich ist.
+     * Gibt zurück, ob der letzte Zug des Menschen rückgängig machbar ist.
      *
      * @return      Gibt {@code true} zurück, falls ein Undo möglich ist,
      *              andernfalls {@code false}.
@@ -253,6 +271,25 @@ public final class DisplayData extends Observable {
     }
 
     /**
+     * Gibt den Spieler zurück, der durch seinen Zug die momentane
+     * Spielsituation kreiert hat, wobei anfangs dies {@code null} ist.
+     *
+     * @return      Entspricht dem Spieler, der zuletzt an der Reihe war,
+     *              wobei dies bei Spielbeginn {@code null} ist.
+     * @see         Board#next()
+     */
+    public Player lastPlayer() {
+        if (boards.size() > 1) {
+            Board top = boards.pop();
+            Player lastPlayer = boards.peek().next();
+            boards.push(top);
+            return lastPlayer;
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Kreiert einen neuen {@code Stack} mit einem neuen Spiel, wobei der
      * Eröffner gesetzt werden kann.
      *
@@ -268,13 +305,39 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Setzt den Zustand auf verändert und updatet alle {@code Observer}.
-     *
-     * @see         #setChanged()
-     * @see         #notifyObserver()
+     * Falls momentan ein Maschinenzug berechnet wird, wird diese Berechnung
+     * abgebrochen und zum Ausgangszustand zurückgeführt.
      */
-    private void updateObserver() {
-        setChanged();
-        notifyObserver();
+    @SuppressWarnings("deprecation")
+    public void stopMachineThread() {
+        if (machineThread != null) {
+            machineThread.stop();
+            machineThread = null;
+            clearChanged();
+        }
+    }
+
+    /**
+     * Dieser {@code Thread} berechnet die Züge der Maschine.
+     */
+    private class MachineThread extends Thread {
+
+        /**
+         * Führt Maschinenzüge solange aus, bis das Spiel vorbei ist oder die
+         * Maschine nicht mehr an der Reihe ist.
+         *
+         * @see         #isGameOver()
+         * @see         #next()
+         * @see         Board#machineMove()
+         */
+        @Override
+        public void run() {
+            while (!isGameOver() && next() == Player.MACHINE) {
+                setChanged();
+                boards.push(boards.peek().machineMove());
+                notifyObserver(true);
+            }
+            machineThread = null;
+        }
     }
 }

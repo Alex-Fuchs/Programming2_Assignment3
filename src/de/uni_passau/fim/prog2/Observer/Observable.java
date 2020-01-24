@@ -71,15 +71,18 @@ public class Observable {
 
     /**
      * Benachrichtigt alle registrierten {@code Observer}, dass sich der
-     * Zustand verändert hat und setzt den Zustand auf unverändert.
+     * Zustand verändert hat und setzt den Zustand auf unverändert, wobei den
+     * {@code Observer} ein zusätliches {@code Object} mit übergeben wird.
      *
-     * @see     #clearChanged()
-     * @see     Observer#update(Observable)
+     * @param arg           Entspricht zusätzlichen Informationen, die den
+     *                      {@code Observer} gegeben werden kann.
+     * @see                 #clearChanged()
+     * @see                 Observer#update(Observable, Object)
      */
-    protected void notifyObserver() {
+    protected void notifyObserver(Object arg) {
         if (hasChanged()) {
             for (Observer o : observers) {
-                o.update(this);
+                o.update(this, arg);
             }
             clearChanged();
         }

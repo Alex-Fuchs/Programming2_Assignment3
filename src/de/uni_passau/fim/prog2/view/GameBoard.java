@@ -62,27 +62,35 @@ class GameBoard extends JPanel implements Observer {
     }
 
     /**
-     * Updatet die visuelle Darstellung des Spielfeldes.
+     * Updatet die visuelle Darstellung des Spielfeldes und gibt nur Meldungen
+     * aus, ob ein Spieler aussetzen muss oder das Spiel vorbei ist, falls
+     * {@code arg} {@code true} ist, was bedeutet, dass ein Spieler gezogen ist,
+     * da andernfalls z.B. bei {@link DisplayData#undo()} nicht nochmal bei
+     * Zurücksetzen des Zuges ausgegeben werden soll, dass ein Spieler
+     * aussetzen muss.
      *
      * @param o                             Entspricht der Spiellogik, von der
      *                                      Informationen benötigt werden.
-     * @throws IllegalArgumentException     Wird geworfen, falls {@code o}
-     *                                      {@code null} ist, oder kein Objekt
-     *                                      von {@code DisplayData}.
-     * @see                                 #setPlayerOfField(int, int, Player)
-     * @see                                 DisplayData#getSlot(int, int)
+     * @param arg                           Entspricht einem Flag, ob ein
+     *                                      Spieler gezogen ist.
+     * @throws IllegalArgumentException     Wird geworfen, falls {@code o} kein
+     *                                      Objekt von {@code DisplayData} oder
+     *                                      {@code arg} kein {@code Boolean}
+     *                                      ist.
+     * @see                                 #updateGameField(DisplayData)
+     * @see                                 #checkGameOver(DisplayData)
+     * @see                                 #checkMissTurn(DisplayData)
      */
     @Override
-    public void update(Observable o) {
-        if (o instanceof DisplayData) {
-            for (int i = 1; i <= Board.SIZE; i++) {
-                for (int u = 1; u <= Board.SIZE; u++) {
-                    Player playerOfSlot = ((DisplayData) o).getSlot(i, u);
-                    setPlayerOfField(i, u, playerOfSlot);
-                }
+    public void update(Observable o, Object arg) {
+        if (o instanceof DisplayData && arg instanceof Boolean) {
+            DisplayData displayData = (DisplayData) o;
+            updateGameField(displayData);
+            if (((boolean) arg) && !checkGameOver(displayData)) {
+                checkMissTurn(displayData);
             }
         } else {
-            throw new IllegalArgumentException("Observable is illegal!");
+            throw new IllegalArgumentException("Observable or arg is illegal!");
         }
     }
 
@@ -200,6 +208,25 @@ class GameBoard extends JPanel implements Observer {
     }
 
     /**
+     * Updatet die visuelle Darstellung des Spielbretts.
+     *
+     * @param displayData       Entspricht der Spiellogik, von der
+     *                          Informationen benötigt werden.
+     * @see                     #setPlayerOfField(int, int, Player)
+     * @see                     DisplayData#getSlot(int, int)
+     */
+    private void updateGameField(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
+
+        for (int i = 1; i <= Board.SIZE; i++) {
+            for (int u = 1; u <= Board.SIZE; u++) {
+                Player playerOfSlot = displayData.getSlot(i, u);
+                setPlayerOfField(i, u, playerOfSlot);
+            }
+        }
+    }
+
+    /**
      * Teilt dem Feld mit der Position ({@code row}, {@code col}) mit, dass
      * nun {@code playerOfField} seinen Stein auf das Feld gesetzt hat,
      * bzw bei {@code null} nun kein Stein mehr auf dem Feld liegt.
@@ -224,6 +251,57 @@ class GameBoard extends JPanel implements Observer {
     }
 
     /**
+     * Überprüft, ob das Spiel vorbei ist und gibt darauf eine Meldung aus.
+     *
+     * @param displayData   Entspricht der Spiellogik, von der Informationen
+     *                      benötigt werden.
+     * @return              Gibt {@code true} zurück, falls das Spiel vorbei
+     *                      ist, ansonsten {@code false}.
+     * @see                 #showJOptionPane(String)
+     * @see                 DisplayData#isGameOver()
+     * @see                 DisplayData#getWinner()
+     */
+    private boolean checkGameOver(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
+
+        if (displayData.isGameOver()) {
+            Player winner = displayData.getWinner();
+            if (winner == Player.MACHINE) {
+                showJOptionPane("The bot has won");
+            } else if (winner == Player.HUMAN) {
+                showJOptionPane("The human has Won!");
+            } else {
+                showJOptionPane("Tie Game");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Überprüft, ob ein Spieler aussetzen muss und gibt darauf eine
+     * Meldung aus.
+     *
+     * @param displayData   Entspricht der Spiellogik, von der Informationen
+     *                      benötigt werden.
+     * @see                 #showJOptionPane(String)
+     * @see                 DisplayData#lastPlayer()
+     * @see                 DisplayData#next()
+     */
+    private void checkMissTurn(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
+
+        Player lastPlayer = displayData.lastPlayer();
+        if (displayData.next() == lastPlayer) {
+            if (lastPlayer == Player.HUMAN) {
+                showJOptionPane("Machine has to miss a turn!");
+            } else {
+                showJOptionPane("Human has to miss a turn!");
+            }
+        }
+    }
+
+    /**
      * Gibt eine Informationsmeldung aus und setzt den Fokus wieder auf
      * {@code ReversiGui}, damit weiterhin die Tastenkombinationen
      * funktionieren.
@@ -236,7 +314,6 @@ class GameBoard extends JPanel implements Observer {
 
         JOptionPane.showMessageDialog(null, message,
                 "Information Message", JOptionPane.INFORMATION_MESSAGE);
-        getTopLevelAncestor().setFocusable(true);
     }
 
     /**
@@ -268,12 +345,9 @@ class GameBoard extends JPanel implements Observer {
         /**
          * Führt einen Zug des Menschen bei einem Mausklick aus, falls dieser
          * an der Reihe ist, das Spiel nicht vorbei ist und der Zug legal ist.
-         * Die Maschine zieht sofort darauf. Es werden bei Ende des Spiels
-         * oder Aussetzen eines Spieler Meldungen ausgegeben.
+         * Die Maschine zieht sofort darauf solange sie kann.
          *
          * @param e     Entspricht dem Event des Mausklicks.
-         * @see         #checkGameOver()
-         * @see         #checkMissTurn(Player)
          * @see         DisplayData#move(int, int)
          * @see         DisplayData#machineMove()
          */
@@ -282,65 +356,10 @@ class GameBoard extends JPanel implements Observer {
             super.mouseClicked(e);
             Field field = (Field) e.getComponent();
             if (displayData.move(field.getRow(), field.getCol())) {
-                if (!checkGameOver() && !checkMissTurn(Player.HUMAN)) {
-                    displayData.machineMove();
-                    while (!checkGameOver() && checkMissTurn(Player.MACHINE)) {
-                        displayData.machineMove();
-                    }
-                }
+                displayData.machineMove();
             } else {
                 Toolkit.getDefaultToolkit().beep();
             }
-        }
-
-        /**
-         * Überprüft, ob ein Spieler aussetzen muss und gibt darauf eine
-         * Meldung aus.
-         *
-         * @param lastMovingPlayer  Entspricht dem zuletzt gezogenen Spieler.
-         * @return                  Gibt {@code true} zurück, falls ein
-         *                          Spieler aussetzen muss, ansonsten
-         *                          {@code false}.
-         * @see                     #showJOptionPane(String)
-         * @see                     DisplayData#next()
-         */
-        private boolean checkMissTurn(Player lastMovingPlayer) {
-            assert lastMovingPlayer != null : "Last player cannot be null!";
-
-            if (displayData.next() == lastMovingPlayer) {
-                if (lastMovingPlayer == Player.HUMAN) {
-                    showJOptionPane("Machine has to miss a turn!");
-                } else {
-                    showJOptionPane("Human has to miss a turn!");
-                }
-                return true;
-            }
-            return false;
-        }
-
-        /**
-         * Überprüft, ob das Spiel vorbei ist und gibt darauf eine Meldung aus.
-         *
-         * @return      Gibt {@code true} zurück, falls das Spiel vorbei ist,
-         *              ansonsten {@code false}.
-         * @see         #showJOptionPane(String)
-         * @see         DisplayData#isGameOver()
-         * @see         DisplayData#getWinner()
-         */
-        private boolean checkGameOver() {
-            if (displayData.isGameOver()) {
-                Player winner = displayData.getWinner();
-
-                if (winner == Player.MACHINE) {
-                    showJOptionPane("The bot has won");
-                } else if (winner == Player.HUMAN) {
-                    showJOptionPane("The human has Won!");
-                } else {
-                    showJOptionPane("Tie Game");
-                }
-                return true;
-            }
-            return false;
         }
     }
 }

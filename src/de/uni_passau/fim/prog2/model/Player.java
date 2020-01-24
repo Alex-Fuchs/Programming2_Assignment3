@@ -1,12 +1,12 @@
 package de.uni_passau.fim.prog2.model;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * {@code Reversi} kann als Mensch vs Maschine gespielt werden,
  * wobei diese Klasse die Spieler und deren Steine darstellt.
  *
- * @version 21.12.19
+ * @version 15.01.20
  * @author -----
  */
 public enum Player {
