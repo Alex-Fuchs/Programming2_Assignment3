@@ -1,7 +1,7 @@
 package de.uni_passau.fim.prog2.view;
 
-import de.uni_passau.fim.prog2.Observer.Observable;
-import de.uni_passau.fim.prog2.Observer.Observer;
+import de.uni_passau.fim.prog2.observer.Observable;
+import de.uni_passau.fim.prog2.observer.Observer;
 import de.uni_passau.fim.prog2.model.DisplayData;
 import de.uni_passau.fim.prog2.model.Board;
 import de.uni_passau.fim.prog2.model.Player;
@@ -24,7 +24,8 @@ import java.awt.event.MouseEvent;
  * Implementiert die visuelle Darstellung des Spielbretts inkl aller Indexe an
  * den Spielbrettseiten und ermöglicht Mausinteraktionen mit dem Spielbrett.
  * Die Klasse implementiert das Interface {@code Observer}, um von der
- * Spiellogik bei Änderungen benachrichtigt werden zu können.
+ * Spiellogik bei einer neuen Spielsituation bzw auszugebenden Meldungen
+ * benachrichtigt werden zu können.
  *
  * @version 15.01.20
  * @author -----
@@ -38,8 +39,8 @@ class GameBoard extends JPanel implements Observer {
 
     /**
      * Kreiert ein Spielfeld mit allen Feldern und Indexen an den Seitenrändern.
-     * Das Spielfeld ermöglicht eine Interaktion mit der Maus für die Züge des
-     * Menschen.
+     * Das Spielfeld ermöglicht eine Interaktion mit der Maus, um als Mensch
+     * zu ziehen.
      *
      * @param displayData   Entspricht der Spiellogik.
      * @see                 #addHorizontalIndexes()
@@ -64,14 +65,15 @@ class GameBoard extends JPanel implements Observer {
     /**
      * Updatet die visuelle Darstellung des Spielfeldes und gibt nur Meldungen
      * aus, ob ein Spieler aussetzen muss oder das Spiel vorbei ist, falls
-     * {@code arg} {@code true} ist, was bedeutet, dass ein Spieler gezogen ist,
-     * da andernfalls z.B. bei {@link DisplayData#undo()} nochmal die Meldung
+     * die Maschine oder der Mensch gezogen ist bzw {@code arg} {@code true}
+     * ist, da andernfalls bei {@link DisplayData#undo()} nochmal eine Meldung
      * ausgegeben wird, dass ein Spieler aussetzen muss.
      *
      * @param o                             Entspricht der Spiellogik, von der
      *                                      Informationen benötigt werden.
      * @param arg                           Entspricht einem Flag, ob ein
-     *                                      Spieler gezogen ist.
+     *                                      Spieler gezogen ist. Wird für die
+     *                                      Ausgabe von Meldungen benötigt.
      * @throws IllegalArgumentException     Wird geworfen, falls {@code o} kein
      *                                      Objekt von {@code DisplayData} oder
      *                                      {@code arg} kein {@code Boolean}
@@ -199,7 +201,6 @@ class GameBoard extends JPanel implements Observer {
      */
     private void initializeFields() {
         int median = Board.SIZE / 2;
-
         setPlayerOfField(median, median, Player.MACHINE);
         setPlayerOfField(median, median + 1, Player.HUMAN);
         setPlayerOfField(median + 1, median, Player.HUMAN);
@@ -360,8 +361,8 @@ class GameBoard extends JPanel implements Observer {
         @Override
         public void mouseClicked(MouseEvent e) {
             super.mouseClicked(e);
-            Field field = (Field) e.getComponent();
             if (!displayData.isMachineMoving()) {
+                Field field = (Field) e.getComponent();
                 if (displayData.move(field.getRow(), field.getCol())) {
                     displayData.machineMove();
                 } else {

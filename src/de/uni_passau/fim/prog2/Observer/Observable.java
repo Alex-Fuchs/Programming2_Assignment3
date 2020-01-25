@@ -1,4 +1,4 @@
-package de.uni_passau.fim.prog2.Observer;
+package de.uni_passau.fim.prog2.observer;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -1,6 +1,6 @@
 package de.uni_passau.fim.prog2.model;
 
-import de.uni_passau.fim.prog2.Observer.Observable;
+import de.uni_passau.fim.prog2.observer.Observable;
 
 import java.util.Stack;
 
@@ -163,6 +163,7 @@ public final class DisplayData extends Observable {
     /**
      * Setzt einen Spielzug des Menschen zurück, falls dieser bereits gezogen
      * hat, wobei dadurch ggf der momentane Maschinenzug abgebrochen wird.
+     * Es wird das Level der Maschine nicht zurückgesetzt.
      *
      * @see         #stopMachineThread()
      * @see         #undoIsPossible()
@@ -243,7 +244,7 @@ public final class DisplayData extends Observable {
      * Gibt den Gewinner zurück, falls das Spiel vorbei ist.
      *
      * @return                              Entspricht dem Gewinner.
-     * @throws IllegalStateException()      Wird geworfen, falls das Spiel
+     * @throws IllegalStateException        Wird geworfen, falls das Spiel
      *                                      noch nicht vorbei ist.
      * @see                                 Board#getWinner()
      */
@@ -287,10 +288,12 @@ public final class DisplayData extends Observable {
     /**
      * Falls momentan ein Maschinenzug berechnet wird, wird diese Berechnung
      * abgebrochen und zum Ausgangszustand zurückgeführt.
+     *
+     * @see         #isMachineMoving()
      */
     @SuppressWarnings("deprecation")
     public void stopMachineThread() {
-        if (machineThread != null) {
+        if (isMachineMoving()) {
             machineThread.stop();
             machineThread = null;
             clearChanged();

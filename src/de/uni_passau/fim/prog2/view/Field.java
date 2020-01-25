@@ -49,9 +49,9 @@ class Field extends JPanel {
         assert mouseAdapter != null : "MouseAdapter cannot be null!";
 
         final Color fieldColor = new Color(0, 180, 0);
-        setBackground(fieldColor);
         this.row = row;
         this.col = col;
+        setBackground(fieldColor);
         addMouseListener(mouseAdapter);
     }
 

@@ -1,4 +1,4 @@
-package de.uni_passau.fim.prog2.Observer;
+package de.uni_passau.fim.prog2.observer;
 
 /**
  * Entspricht dem Interface {@code Observer} des Design-Patterns Observer.

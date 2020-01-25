@@ -1,7 +1,7 @@
 package de.uni_passau.fim.prog2.view;
 
-import de.uni_passau.fim.prog2.Observer.Observable;
-import de.uni_passau.fim.prog2.Observer.Observer;
+import de.uni_passau.fim.prog2.observer.Observable;
+import de.uni_passau.fim.prog2.observer.Observer;
 import de.uni_passau.fim.prog2.model.DisplayData;
 import de.uni_passau.fim.prog2.model.Player;
 
@@ -150,6 +150,7 @@ public final class ReversiGui extends JFrame implements Observer {
      *
      * @param displayData   Entspricht der Spiellogik, die auf Interaktionen
      *                      im Menü reagieren muss.
+     * @return              Gibt das Menü, das kreiert wurde, zurück.
      * @see                 #addShortCuts(JPanel, DisplayData)
      * @see                 #createScoreJLabel(Color)
      * @see                 #createLevelJComboBox(DisplayData)
@@ -247,7 +248,8 @@ public final class ReversiGui extends JFrame implements Observer {
         quit.addActionListener(new ActionListener() {
 
             /**
-             * Beendet das Spiel.
+             * Beendet das Spiel, wobei ggf die Berechnungen der Maschinenzüge
+             * ebenfalls beendet werden.
              *
              * @param e     Entspricht dem auslösenden Klick.
              */
@@ -260,7 +262,8 @@ public final class ReversiGui extends JFrame implements Observer {
     }
 
     /**
-     * Kreiert die Levelauswahl als {@code JComboBox}.
+     * Kreiert eine {@code JComboBox}, in der das Level der Maschine ausgewählt
+     * werden kann.
      *
      * @param displayData   Entspricht der Spiellogik, der das neue Level
      *                      mitgeteilt werden muss.
@@ -274,13 +277,6 @@ public final class ReversiGui extends JFrame implements Observer {
         JComboBox jComboBox = new JComboBox<>(itemsOfJComboBox);
         jComboBox.setSelectedItem(defaultLevel);
         jComboBox.addActionListener(new ActionListener() {
-
-            /**
-             * Setzt das Level auf einen positiven Wert.
-             *
-             * @param e      Entspricht dem auslösenden Klick.
-             * @see          DisplayData#setLevel(int)
-             */
             @Override
             public void actionPerformed(ActionEvent e) {
                 displayData.setLevel((int) jComboBox.getSelectedItem());
@@ -307,11 +303,31 @@ public final class ReversiGui extends JFrame implements Observer {
         return jLabel;
     }
 
+
+    /**
+     * Stellt sicher, dass beim Schließen der Gui auch die
+     * Maschinenberechnungen beendet werden.
+     *
+     * @param displayData       Entspricht der Spiellogik, der mitgeteilt
+     *                          werden muss, dass das Spiel nun beendet wird.
+     */
+    private void addWindowListener(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                super.windowClosed(e);
+                displayData.stopMachineThread();
+            }
+        });
+    }
+
     /**
      * Fügt die Tastenkombinationen des Spiels hinzu.
      *
      * @param menu              Die Tastenkombinationen werden beim Menü
-     *                          gespeichert.
+     *                          realisiert.
      * @param displayData       Entspricht der Spiellogik, auf die durch die
      *                          Operationen der Tastenkombinationen zugegriffen
      *                          werden muss.
@@ -333,18 +349,42 @@ public final class ReversiGui extends JFrame implements Observer {
                 InputEvent.ALT_DOWN_MASK), "quit");
 
         actionMap.put("new", new AbstractAction() {
+
+            /**
+             * Benachrichtigt die Spiellogik ein neues Spiel zu eröffnen.
+             *
+             * @param e     Entspricht der auslösenden Tastenkombination.
+             * @see         DisplayData#createNewBoard()
+             */
             @Override
             public void actionPerformed(ActionEvent e) {
                 displayData.createNewBoard();
             }
         });
         actionMap.put("switch", new AbstractAction() {
+
+            /**
+             * Benachrichtigt die Spiellogik den Eröffner zu wechseln und
+             * ein neues Spiel zu starten.
+             *
+             * @param e     Entspricht der auslösenden Tastenkombination.
+             * @see         DisplayData#switchPlayerOrder()
+             */
             @Override
             public void actionPerformed(ActionEvent e) {
                 displayData.switchPlayerOrder();
             }
         });
         actionMap.put("undo", new AbstractAction() {
+
+            /**
+             * Benachrichtigt die Spiellogik einen Zug des menschlichen
+             * Spieler rückgängig zu machen, falls dieser bereits gezogen ist.
+             *
+             * @param e     Entspricht der auslösenden Tastenkombination.
+             * @see         DisplayData#undoIsPossible()
+             * @see         DisplayData#undo()
+             */
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (displayData.undoIsPossible()) {
@@ -353,6 +393,13 @@ public final class ReversiGui extends JFrame implements Observer {
             }
         });
         actionMap.put("quit", new AbstractAction() {
+
+            /**
+             * Beendet das Spiel, wobei ggf die Berechnungen der Maschinenzüge
+             * ebenfalls beendet werden.
+             *
+             * @param e     Entspricht der auslösenden Tastenkombination.
+             */
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose();
@@ -361,26 +408,7 @@ public final class ReversiGui extends JFrame implements Observer {
     }
 
     /**
-     * Stellt sicher, dass beim Schließen der Gui auch die
-     * Maschinenberechnungen beendet werden.
-     *
-     * @param displayData       Entspricht der Spiellogik, der mitgeteilt
-     *                          werden muss, das das Spiel nun beendet wird.
-     */
-    private void addWindowListener(DisplayData displayData) {
-        assert displayData != null : "DisplayData cannot be null!";
-
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                super.windowClosed(e);
-                displayData.stopMachineThread();
-            }
-        });
-    }
-
-    /**
-     * Startmethode von dem Programm.
+     * Startmethode des Programms.
      *
      * @param args  Übergabeparameter des Programms.
      */
