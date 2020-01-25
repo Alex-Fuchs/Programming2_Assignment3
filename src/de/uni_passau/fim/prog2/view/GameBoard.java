@@ -363,11 +363,13 @@ class GameBoard extends JPanel implements Observer {
             super.mouseClicked(e);
             if (!displayData.isGameOver()) {
                 if (displayData.next() == Player.HUMAN) {
-                    Field field = (Field) e.getComponent();
-                    if (displayData.move(field.getRow(), field.getCol())) {
-                        displayData.machineMove();
-                    } else {
-                        Toolkit.getDefaultToolkit().beep();
+                    if (!displayData.hasChanged()) {
+                        Field field = (Field) e.getComponent();
+                        if (displayData.move(field.getRow(), field.getCol())) {
+                            displayData.machineMove();
+                        } else {
+                            Toolkit.getDefaultToolkit().beep();
+                        }
                     }
                 } else {
                     showJOptionPane("Machine needs more time for Moving!",

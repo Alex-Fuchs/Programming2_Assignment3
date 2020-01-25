@@ -277,11 +277,6 @@ public final class DisplayData extends Observable {
      */
     public Player lastPlayer() {
         if (boards.size() > 1) {
-            /*
-             * Aufgrund der Nebenläufigkeit kann dies beim Updaten des
-             * Spielfeldes parallel zu einem Zug des Menschen ablaufen,
-             * weshalb boards kopiert werden muss.
-             */
             Stack<Board> copy = new Stack<>();
             copy.addAll(boards);
             copy.pop();
