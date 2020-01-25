@@ -1,7 +1,7 @@
 package de.uni_passau.fim.prog2.Observer;
 
 /**
- * Entspricht der Klasse {@code Observer} des Design-Patterns Observer.
+ * Entspricht dem Interface {@code Observer} des Design-Patterns Observer.
  *
  * @version 15.01.20
  * @author -----

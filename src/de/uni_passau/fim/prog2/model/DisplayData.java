@@ -155,14 +155,9 @@ public final class DisplayData extends Observable {
 
         stopMachineThread();
         setChanged();
-        if (boards.peek().getFirstPlayer() == Player.HUMAN) {
-            boards = createNewStack(Player.MACHINE);
-            notifyObserver(false);
-            machineMove();
-        } else {
-            boards = createNewStack(Player.HUMAN);
-            notifyObserver(false);
-        }
+        boards = createNewStack(boards.peek().getFirstPlayer().inverse());
+        notifyObserver(false);
+        machineMove();
     }
 
     /**
@@ -290,6 +285,29 @@ public final class DisplayData extends Observable {
     }
 
     /**
+     * Falls momentan ein Maschinenzug berechnet wird, wird diese Berechnung
+     * abgebrochen und zum Ausgangszustand zurückgeführt.
+     */
+    @SuppressWarnings("deprecation")
+    public void stopMachineThread() {
+        if (machineThread != null) {
+            machineThread.stop();
+            machineThread = null;
+            clearChanged();
+        }
+    }
+
+    /**
+     * Gibt zurück, ob die Maschine momentan ihren Zug berechnet.
+     *
+     * @return      Entspricht {@code true}, falls momentan die Maschine
+     *              ihren Zug berechnet.
+     */
+    public boolean isMachineMoving() {
+        return (machineThread != null);
+    }
+
+    /**
      * Kreiert einen neuen {@code Stack} mit einem neuen Spiel, wobei der
      * Eröffner gesetzt werden kann.
      *
@@ -302,19 +320,6 @@ public final class DisplayData extends Observable {
         Stack<Board> stack = new Stack<>();
         stack.add(new Reversi(firstPlayer));
         return stack;
-    }
-
-    /**
-     * Falls momentan ein Maschinenzug berechnet wird, wird diese Berechnung
-     * abgebrochen und zum Ausgangszustand zurückgeführt.
-     */
-    @SuppressWarnings("deprecation")
-    public void stopMachineThread() {
-        if (machineThread != null) {
-            machineThread.stop();
-            machineThread = null;
-            clearChanged();
-        }
     }
 
     /**

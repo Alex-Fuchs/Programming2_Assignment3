@@ -49,10 +49,10 @@ class Field extends JPanel {
         assert mouseAdapter != null : "MouseAdapter cannot be null!";
 
         final Color fieldColor = new Color(0, 180, 0);
+        setBackground(fieldColor);
         this.row = row;
         this.col = col;
         addMouseListener(mouseAdapter);
-        setBackground(fieldColor);
     }
 
     /**
@@ -118,7 +118,6 @@ class Field extends JPanel {
     private void drawFieldLines(Graphics2D graphics) {
         int width = getWidth();
         int height = getHeight();
-
         graphics.drawLine(0, 0, width, 0);
         graphics.drawLine(0, 0, 0, height);
         graphics.drawLine(width, 0, width, height);

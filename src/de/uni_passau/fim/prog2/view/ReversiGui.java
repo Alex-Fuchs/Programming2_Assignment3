@@ -5,14 +5,30 @@ import de.uni_passau.fim.prog2.Observer.Observer;
 import de.uni_passau.fim.prog2.model.DisplayData;
 import de.uni_passau.fim.prog2.model.Player;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
+import javax.swing.InputMap;
+import javax.swing.ActionMap;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.Font;
 import java.awt.Color;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.Container;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Implementiert die visuelle Darstellung von Reversi inkl Menü. Das Menü
@@ -49,6 +65,7 @@ public final class ReversiGui extends JFrame implements Observer {
      * @param displayData   Entspricht der Spiellogik, die sowohl die
      *                      Controller als auch die Observer benötigen.
      * @see                 #createMenu(DisplayData)
+     * @see                 #addWindowListener(DisplayData)
      * @see                 GameBoard
      */
     private ReversiGui(DisplayData displayData) {
@@ -58,12 +75,13 @@ public final class ReversiGui extends JFrame implements Observer {
         Container contentPane = getContentPane();
         contentPane.add(new GameBoard(displayData), BorderLayout.CENTER);
         contentPane.add(createMenu(displayData), BorderLayout.SOUTH);
+
         displayData.addObserver(this);
+        addWindowListener(displayData);
 
         setTitle("Reversi");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(600, 600);
-        setFocusable(true);
         setVisible(true);
     }
 
@@ -78,7 +96,6 @@ public final class ReversiGui extends JFrame implements Observer {
      *                                      {@code Observer} nicht benötigt.
      * @throws IllegalArgumentException     Wird geworfen, falls {@code o} kein
      *                                      Objekt von {@code DisplayData} ist.
-     *                                      von {@code DisplayData}.
      * @see                                 #updateScores(DisplayData)
      * @see                                 #updateUndo(DisplayData)
      */
@@ -128,14 +145,14 @@ public final class ReversiGui extends JFrame implements Observer {
     }
 
     /**
-     * Kreiert die visuelle Darstellung des Menü und fügt die Shortcuts
-     * des Spiels hinzu.
+     * Kreiert die visuelle Darstellung des Menü und fügt die
+     * Tastenkombinationen des Spiels hinzu.
      *
      * @param displayData   Entspricht der Spiellogik, die auf Interaktionen
      *                      im Menü reagieren muss.
      * @see                 #addShortCuts(JPanel, DisplayData)
      * @see                 #createScoreJLabel(Color)
-     * @see                 #createJComboBox(DisplayData)
+     * @see                 #createLevelJComboBox(DisplayData)
      * @see                 #addButtons(JPanel, DisplayData)
      */
     private JPanel createMenu(DisplayData displayData) {
@@ -154,7 +171,7 @@ public final class ReversiGui extends JFrame implements Observer {
         updateScores(displayData);
 
         menu.add(humanScore);
-        menu.add(createJComboBox(displayData));
+        menu.add(createLevelJComboBox(displayData));
         addButtons(menu, displayData);
         menu.add(machineScore);
         return menu;
@@ -236,7 +253,6 @@ public final class ReversiGui extends JFrame implements Observer {
              */
             @Override
             public void actionPerformed(ActionEvent e) {
-                displayData.stopMachineThread();
                 dispose();
             }
         });
@@ -250,7 +266,7 @@ public final class ReversiGui extends JFrame implements Observer {
      *                      mitgeteilt werden muss.
      * @return              Gibt die erzeugte {@code JComboBox} zurück.
      */
-    private JComboBox createJComboBox(DisplayData displayData) {
+    private JComboBox createLevelJComboBox(DisplayData displayData) {
         assert displayData != null : "DisplayData cannot be null!";
 
         final int defaultLevel = 3;
@@ -339,8 +355,26 @@ public final class ReversiGui extends JFrame implements Observer {
         actionMap.put("quit", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                displayData.stopMachineThread();
                 dispose();
+            }
+        });
+    }
+
+    /**
+     * Stellt sicher, dass beim Schließen der Gui auch die
+     * Maschinenberechnungen beendet werden.
+     *
+     * @param displayData       Entspricht der Spiellogik, der mitgeteilt
+     *                          werden muss, das das Spiel nun beendet wird.
+     */
+    private void addWindowListener(DisplayData displayData) {
+        assert displayData != null : "DisplayData cannot be null!";
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                super.windowClosed(e);
+                displayData.stopMachineThread();
             }
         });
     }

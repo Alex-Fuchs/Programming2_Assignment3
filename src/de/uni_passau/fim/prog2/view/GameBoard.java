@@ -65,9 +65,8 @@ class GameBoard extends JPanel implements Observer {
      * Updatet die visuelle Darstellung des Spielfeldes und gibt nur Meldungen
      * aus, ob ein Spieler aussetzen muss oder das Spiel vorbei ist, falls
      * {@code arg} {@code true} ist, was bedeutet, dass ein Spieler gezogen ist,
-     * da andernfalls z.B. bei {@link DisplayData#undo()} nicht nochmal bei
-     * Zurücksetzen des Zuges ausgegeben werden soll, dass ein Spieler
-     * aussetzen muss.
+     * da andernfalls z.B. bei {@link DisplayData#undo()} nochmal die Meldung
+     * ausgegeben wird, dass ein Spieler aussetzen muss.
      *
      * @param o                             Entspricht der Spiellogik, von der
      *                                      Informationen benötigt werden.
@@ -257,7 +256,7 @@ class GameBoard extends JPanel implements Observer {
      *                      benötigt werden.
      * @return              Gibt {@code true} zurück, falls das Spiel vorbei
      *                      ist, ansonsten {@code false}.
-     * @see                 #showJOptionPane(String)
+     * @see                 #showJOptionPane(String, String, int)
      * @see                 DisplayData#isGameOver()
      * @see                 DisplayData#getWinner()
      */
@@ -266,13 +265,16 @@ class GameBoard extends JPanel implements Observer {
 
         if (displayData.isGameOver()) {
             Player winner = displayData.getWinner();
+            String message;
             if (winner == Player.MACHINE) {
-                showJOptionPane("The bot has won");
+                message = "The bot has won";
             } else if (winner == Player.HUMAN) {
-                showJOptionPane("The human has Won!");
+                message = "The human has won!";
             } else {
-                showJOptionPane("Tie Game");
+                message = "Tie game";
             }
+            showJOptionPane(message, "Game over!",
+                    JOptionPane.INFORMATION_MESSAGE);
             return true;
         }
         return false;
@@ -284,7 +286,7 @@ class GameBoard extends JPanel implements Observer {
      *
      * @param displayData   Entspricht der Spiellogik, von der Informationen
      *                      benötigt werden.
-     * @see                 #showJOptionPane(String)
+     * @see                 #showJOptionPane(String, String, int)
      * @see                 DisplayData#lastPlayer()
      * @see                 DisplayData#next()
      */
@@ -293,27 +295,31 @@ class GameBoard extends JPanel implements Observer {
 
         Player lastPlayer = displayData.lastPlayer();
         if (displayData.next() == lastPlayer) {
+            String message;
             if (lastPlayer == Player.HUMAN) {
-                showJOptionPane("Machine has to miss a turn!");
+                message = "Machine has to miss a turn!";
             } else {
-                showJOptionPane("Human has to miss a turn!");
+                message = "Human has to miss a turn!";
             }
+            showJOptionPane(message, "Miss Turn!",
+                    JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
     /**
-     * Gibt eine Informationsmeldung aus und setzt den Fokus wieder auf
-     * {@code ReversiGui}, damit weiterhin die Tastenkombinationen
-     * funktionieren.
+     * Gibt eine Meldung aus, wobei die Nachricht, der Titel und der Typ der
+     * Nachricht angegeben werden kann.
      *
      * @param message       Entspricht dem Text, der in der Meldung ausgegeben
      *                      werden soll.
+     * @param title         Entspricht dem Titel der Meldung.
+     * @param type          Entspricht dem Typen der Meldung.
      */
-    private void showJOptionPane(String message) {
+    private void showJOptionPane(String message, String title, int type) {
         assert message != null : "Message cannot be null!";
+        assert title != null : "The title cannot be null!";
 
-        JOptionPane.showMessageDialog(null, message,
-                "Information Message", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, message, title, type);
     }
 
     /**
@@ -355,10 +361,15 @@ class GameBoard extends JPanel implements Observer {
         public void mouseClicked(MouseEvent e) {
             super.mouseClicked(e);
             Field field = (Field) e.getComponent();
-            if (displayData.move(field.getRow(), field.getCol())) {
-                displayData.machineMove();
+            if (!displayData.isMachineMoving()) {
+                if (displayData.move(field.getRow(), field.getCol())) {
+                    displayData.machineMove();
+                } else {
+                    Toolkit.getDefaultToolkit().beep();
+                }
             } else {
-                Toolkit.getDefaultToolkit().beep();
+                showJOptionPane("Machine is Moving!", "Not your Turn!",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

@@ -23,7 +23,7 @@ public class Observable {
      * Kreiert ein {@code Observable} ohne {@code Observer}.
      */
     protected Observable() {
-        observers = new HashSet<Observer>();
+        observers = new HashSet<>();
     }
 
     /**
@@ -38,7 +38,7 @@ public class Observable {
         if (observer != null) {
             observers.add(observer);
         } else {
-            throw new IllegalArgumentException("observer cannot be null!");
+            throw new IllegalArgumentException("Observer cannot be null!");
         }
     }
 
@@ -53,7 +53,7 @@ public class Observable {
         if (observer != null) {
             observers.remove(observer);
         } else {
-            throw new IllegalArgumentException("observer cannot be null");
+            throw new IllegalArgumentException("Observer cannot be null");
         }
     }
 
@@ -76,6 +76,7 @@ public class Observable {
      *
      * @param arg           Entspricht zusätzlichen Informationen, die den
      *                      {@code Observer} gegeben werden kann.
+     * @see                 #hasChanged()
      * @see                 #clearChanged()
      * @see                 Observer#update(Observable, Object)
      */
