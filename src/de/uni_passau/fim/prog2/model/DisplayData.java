@@ -88,7 +88,7 @@ public final class DisplayData extends Observable {
 
     /**
      * Führt die Maschinenzüge aus, bis das Spiel vorbei ist oder nun der
-     * Mensch an der Reihe ist, wobei dies von {@code MaschineThread}
+     * Mensch an der Reihe ist, wobei dies von {@code MachineThread}
      * berechnet wird.
      *
      * @throws IllegalStateException    Wird geworfen, falls versucht wird,
@@ -311,11 +311,11 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Kreiert einen neuen {@code Stack} mit einem neuen Spiel, wobei der
+     * Kreiert einen neuen {@code Stack<Board>} mit einem neuen Spiel, wobei der
      * Eröffner gesetzt werden kann.
      *
      * @param firstPlayer       Entspricht dem Eröffner.
-     * @return                  Gibt den neuen {@code Stack} zurück.
+     * @return                  Gibt den neuen {@code Stack<Board>} zurück.
      */
     private Stack<Board> createNewStack(Player firstPlayer) {
         assert firstPlayer != null : "First player cannot be undefined!";

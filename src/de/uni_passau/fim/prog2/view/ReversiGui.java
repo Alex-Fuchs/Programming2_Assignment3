@@ -32,7 +32,7 @@ import java.awt.event.WindowEvent;
 
 /**
  * Implementiert die visuelle Darstellung von Reversi inkl Menü. Das Menü
- * beinhaltet {@code JButtons}, um ein neues Spiel zu beginnen, den Eröffner zu
+ * beinhaltet {@code JButton}, um ein neues Spiel zu beginnen, den Eröffner zu
  * wechseln, einen Spielzug rückgängig zu machen und für die Levelauswahl
  * eine {@code JComboBox}. Es ist ebenfalls möglich das Menü mit
  * Tastenkombinationen zu benutzen. Die Klasse implementiert das Interface
@@ -179,7 +179,7 @@ public final class ReversiGui extends JFrame implements Observer {
     }
 
     /**
-     * Fügt die {@code JButtons} des Menüs hinzu.
+     * Fügt die {@code JButton} des Menüs hinzu.
      *
      * @param menu              Entspricht dem gesamten Menü.
      * @param displayData       Entspricht der Spiellogik, die auf die

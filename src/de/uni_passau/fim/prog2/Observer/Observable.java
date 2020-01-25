@@ -30,9 +30,12 @@ public class Observable {
      * Fügt einen {@code Observer} hinzu, wobei dieser jedoch nicht hinzugefügt
      * wird, falls dieser bereits registriert wurde.
      *
-     * @param observer      Entspricht den zu hinzufügendem {@code Observer},
-     *                      der nicht {@code null} sein darf.
-     * @see                 Observer
+     * @param observer                      Entspricht den zu hinzufügendem
+     *                                      {@code Observer}, der nicht
+     *                                      {@code null} sein darf.
+     * @throws IllegalArgumentException     Wird geworfen, falls
+     *                                      {@code observer} {@code null} ist.
+     * @see                                 Observer
      */
     public void addObserver(Observer observer) {
         if (observer != null) {
@@ -45,9 +48,12 @@ public class Observable {
     /**
      * Löscht einen registrierten {@code Observer}.
      *
-     * @param observer      Entspricht den zu löschenden {@code Observer}, der
-     *                      nicht {@code null} sein darf.
-     * @see                 Observer
+     * @param observer                      Entspricht den zu löschenden
+     *                                      {@code Observer}, der nicht
+     *                                      {@code null} sein darf.
+     * @throws IllegalArgumentException     Wird geworfen, falls
+     *                                      {@code observer} {@code null} ist.
+     * @see                                 Observer
      */
     public void removeObserver(Observer observer) {
         if (observer != null) {
@@ -72,7 +78,7 @@ public class Observable {
     /**
      * Benachrichtigt alle registrierten {@code Observer}, dass sich der
      * Zustand verändert hat und setzt den Zustand auf unverändert, wobei den
-     * {@code Observer} ein zusätliches {@code Object} mit übergeben wird.
+     * {@code Observer} ein zusätzliches {@code Object} mit übergeben wird.
      *
      * @param arg           Entspricht zusätzlichen Informationen, die den
      *                      {@code Observer} gegeben werden kann.
