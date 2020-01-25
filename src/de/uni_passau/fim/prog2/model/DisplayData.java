@@ -53,20 +53,21 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Führt einen Zug des menschlichen Spielers aus, falls dieser legal ist,
-     * das Spiel nicht vorbei ist und der Mensch an der Reihe ist. Falls
-     * der Zug erfolgreich war, wird die View benachrichtigt.
+     * Führt einen Zug des menschlichen Spielers aus, falls dieser legal ist.
+     * Falls der Zug erfolgreich war, wird die View benachrichtigt.
      *
      * @param row                           Entspricht der Zeile in der der
      *                                      Stein gelegt werden soll.
      * @param col                           Entspricht der Spalte in der der
      *                                      Stein gelegt werden soll.
-     * @return                              Gibt zurück, ob der Zug erfolgreich
-     *                                      war.
+     * @return                              Gibt zurück, ob der Zug legal ist.
      * @throws IllegalArgumentException     Wird geworfen, falls {@code row}
      *                                      oder {@code col} negativ, {@code 0}
      *                                      oder größer als {@code Board.SIZE}
      *                                      ist.
+     * @throws IllegalMoveException         Wird geworfen, falls der Mensch
+     *                                      nicht an der Reihe ist oder das
+     *                                      Spiel nicht vorbei ist.
      * @see                                 #isGameOver()
      * @see                                 #next()
      * @see                                 Board#move(int, int)
@@ -74,22 +75,20 @@ public final class DisplayData extends Observable {
     public boolean move(int row, int col) {
         assert boards.peek() != null : "Illegal state of DisplayData";
 
-        if (!isGameOver() && next() == Player.HUMAN) {
-            Board move = boards.peek().move(row, col);
-            if (move != null) {
-                setChanged();
-                boards.push(move);
-                notifyObserver(true);
-                return true;
-            }
+        Board move = boards.peek().move(row, col);
+        if (move != null) {
+            setChanged();
+            boards.push(move);
+            notifyObserver(true);
+            return true;
         }
         return false;
     }
 
     /**
-     * Führt die Maschinenzüge aus, bis das Spiel vorbei ist oder nun der
-     * Mensch an der Reihe ist, wobei dies von {@code MachineThread}
-     * berechnet wird.
+     * Führt Maschinenzüge aus, falls das Spiel nicht vorbei ist und
+     * die Maschine an der Reihe ist, wobei dies von {@code MachineThread}
+     * berechnet wird. Die Maschine zieht dabei solange sie kann.
      *
      * @throws IllegalStateException    Wird geworfen, falls versucht wird,
      *                                  Maschinenzüge auszuführen, obwohl diese
@@ -100,8 +99,10 @@ public final class DisplayData extends Observable {
         assert boards.peek() != null : "Illegal state of DisplayData";
 
         if (machineThread == null) {
-            machineThread = new MachineThread();
-            machineThread.start();
+            if (!isGameOver() && next() == Player.MACHINE) {
+                machineThread = new MachineThread();
+                machineThread.start();
+            }
         } else {
             throw new IllegalStateException("The machine is already moving!");
         }
@@ -276,10 +277,15 @@ public final class DisplayData extends Observable {
      */
     public Player lastPlayer() {
         if (boards.size() > 1) {
-            Board top = boards.pop();
-            Player lastPlayer = boards.peek().next();
-            boards.push(top);
-            return lastPlayer;
+            /*
+             * Aufgrund der Nebenläufigkeit kann dies beim Updaten des
+             * Spielfeldes parallel zu einem Zug des Menschen ablaufen,
+             * weshalb boards kopiert werden muss.
+             */
+            Stack<Board> copy = new Stack<>();
+            copy.addAll(boards);
+            copy.pop();
+            return copy.peek().next();
         } else {
             return null;
         }
@@ -288,26 +294,14 @@ public final class DisplayData extends Observable {
     /**
      * Falls momentan ein Maschinenzug berechnet wird, wird diese Berechnung
      * abgebrochen und zum Ausgangszustand zurückgeführt.
-     *
-     * @see         #isMachineMoving()
      */
     @SuppressWarnings("deprecation")
     public void stopMachineThread() {
-        if (isMachineMoving()) {
+        if (machineThread != null) {
             machineThread.stop();
             machineThread = null;
             clearChanged();
         }
-    }
-
-    /**
-     * Gibt zurück, ob die Maschine momentan ihren Zug berechnet.
-     *
-     * @return      Entspricht {@code true}, falls momentan die Maschine
-     *              ihren Zug berechnet.
-     */
-    public boolean isMachineMoving() {
-        return (machineThread != null);
     }
 
     /**

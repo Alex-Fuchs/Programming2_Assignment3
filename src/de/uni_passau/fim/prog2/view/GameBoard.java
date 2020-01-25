@@ -361,16 +361,21 @@ class GameBoard extends JPanel implements Observer {
         @Override
         public void mouseClicked(MouseEvent e) {
             super.mouseClicked(e);
-            if (!displayData.isMachineMoving()) {
-                Field field = (Field) e.getComponent();
-                if (displayData.move(field.getRow(), field.getCol())) {
-                    displayData.machineMove();
+            if (!displayData.isGameOver()) {
+                if (displayData.next() == Player.HUMAN) {
+                    Field field = (Field) e.getComponent();
+                    if (displayData.move(field.getRow(), field.getCol())) {
+                        displayData.machineMove();
+                    } else {
+                        Toolkit.getDefaultToolkit().beep();
+                    }
                 } else {
-                    Toolkit.getDefaultToolkit().beep();
+                    showJOptionPane("Machine needs more time for Moving!",
+                            "Not your Turn!", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                showJOptionPane("Machine is Moving!", "Not your Turn!",
-                        JOptionPane.ERROR_MESSAGE);
+                showJOptionPane("Please start a new game, the game is over!",
+                        "Game already over!", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
