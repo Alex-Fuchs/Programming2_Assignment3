@@ -13,12 +13,12 @@ package de.uni_passau.fim.prog2.model;
 class Score {
 
     /**
-     * Entspricht das zu bewertende Spielobjekt.
+     * Entspricht dem zu bewertenden Spielobjekt.
      */
     private Reversi reversi;
 
     /**
-     * Entspricht den zu bewertenden Spieler.
+     * Entspricht dem zu bewertenden Spieler.
      */
     private Player playerToAssess;
 

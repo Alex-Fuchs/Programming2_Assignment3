@@ -109,10 +109,11 @@ class GameBoard extends JPanel implements Observer {
         final int rightBorder = 8;
         JPanel gameBoard = new JPanel(new GridLayout(Board.SIZE, Board.SIZE));
         MouseAdapter fieldMouseAdapter = new FieldMouseAdapter(displayData);
-        for (int i = 1; i <= Board.SIZE; i++) {
-            for (int u = 1; u <= Board.SIZE; u++) {
-                fields[i - 1][u - 1] = new Field(i, u, fieldMouseAdapter);
-                gameBoard.add(fields[i - 1][u - 1]);
+        for (int row = 1; row <= Board.SIZE; row++) {
+            for (int col = 1; col <= Board.SIZE; col++) {
+                fields[row - 1][col - 1]
+                        = new Field(row, col, fieldMouseAdapter);
+                gameBoard.add(fields[row - 1][col - 1]);
             }
         }
         initializeFields();
@@ -218,10 +219,10 @@ class GameBoard extends JPanel implements Observer {
     private void updateGameField(DisplayData displayData) {
         assert displayData != null : "DisplayData cannot be null!";
 
-        for (int i = 1; i <= Board.SIZE; i++) {
-            for (int u = 1; u <= Board.SIZE; u++) {
-                Player playerOfSlot = displayData.getSlot(i, u);
-                setPlayerOfField(i, u, playerOfSlot);
+        for (int row = 1; row <= Board.SIZE; row++) {
+            for (int col = 1; col <= Board.SIZE; col++) {
+                Player playerOfSlot = displayData.getSlot(row, col);
+                setPlayerOfField(row, col, playerOfSlot);
             }
         }
     }

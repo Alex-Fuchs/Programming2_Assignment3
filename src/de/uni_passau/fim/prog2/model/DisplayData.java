@@ -166,22 +166,28 @@ public final class DisplayData extends Observable {
      * hat, wobei dadurch ggf der momentane Maschinenzug abgebrochen wird.
      * Es wird das Level der Maschine nicht zurückgesetzt.
      *
-     * @see         #stopMachineThread()
-     * @see         #undoIsPossible()
+     * @throws IllegalStateException    Wird geworfen, falls
+     *                                  {@link #undoIsPossible()} {@code false}
+     *                                  entspricht.
+     * @see                             #stopMachineThread()
+     * @see                             #undoIsPossible()
      */
     public void undo() {
         assert boards.peek() != null : "Illegal state of DisplayData";
-        assert undoIsPossible() : "Undo should only be then called!";
 
-        boolean humanMovePopped = false;
-        stopMachineThread();
-        while (!humanMovePopped && undoIsPossible()) {
-            setChanged();
-            boards.pop();
-            notifyObserver(false);
-            if (next() == Player.HUMAN) {
-                humanMovePopped = true;
-            }
+        if (undoIsPossible()) {
+            boolean humanMovePopped = false;
+            stopMachineThread();
+            do {
+                setChanged();
+                boards.pop();
+                notifyObserver(false);
+                if (next() == Player.HUMAN) {
+                    humanMovePopped = true;
+                }
+            } while (!humanMovePopped && undoIsPossible());
+        } else {
+            throw new IllegalStateException("Undo is not possible!");
         }
     }
 

@@ -14,30 +14,37 @@ enum Direction {
      * Entspricht der nördlichen Richtung mit der Veränderung: (0, -1).
      */
     NORTH(0, -1),
+
     /**
      * Entspricht der nord-östlichen Richtung mit der Veränderung: (1, -1)
      */
     NORTH_EAST(1, -1),
+
     /**
      * Entspricht der östlichen Richtung mit der Veränderung: (1, 0)
      */
     EAST(1, 0),
+
     /**
      * Entspricht der süd-östlichen Richtung mit der Veränderung: (1, 1).
      */
     SOUTH_EAST(1, 1),
+
     /**
      * Entspricht der südlichen Richtung mit der Veränderung: (0, 1).
      */
     SOUTH(0, 1),
+
     /**
      * Entspricht der süd-westlichen Richtung mit der Veränderung: (-1, 1)
      */
     SOUTH_WEST(-1, 1),
+
     /**
      * Entspricht der westlichen Richtung mit der Veränderung: (-1, 0).
      */
     WEST(-1, 0),
+
     /**
      * Entspricht der nördlich-westlichen Richtung mit
      * der Veränderung: (-1, -1).

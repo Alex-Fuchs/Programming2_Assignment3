@@ -31,6 +31,7 @@ public enum Player {
             return Color.BLUE;
         }
     },
+
     /**
      * Entspricht der Maschine.
      */

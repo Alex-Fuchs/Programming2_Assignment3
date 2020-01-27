@@ -8,7 +8,7 @@ package de.uni_passau.fim.prog2.model;
  * @version 21.12.19
  * @author -----
  */
-class IllegalMoveException extends RuntimeException {
+public class IllegalMoveException extends RuntimeException {
 
     /**
      * Vewendet lediglich den Super Konstruktor zur Instanziierung der
