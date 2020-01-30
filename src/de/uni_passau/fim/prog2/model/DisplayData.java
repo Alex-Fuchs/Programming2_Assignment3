@@ -3,6 +3,8 @@ package de.uni_passau.fim.prog2.model;
 import de.uni_passau.fim.prog2.observer.Observable;
 
 import java.util.Stack;
+import javax.swing.SwingUtilities;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Entspricht dem Vermittler zwischen {@code Board} und Controller. Die Klasse
@@ -11,7 +13,7 @@ import java.util.Stack;
  * hinzugefügt, die den letzten Spielzug des Menschen rückgängig macht, falls
  * dieser bereits gezogen ist.
  *
- * @version 15.01.20
+ * @version 25.01.20
  * @author -----
  */
 public final class DisplayData extends Observable {
@@ -26,6 +28,13 @@ public final class DisplayData extends Observable {
      * wobei dieser während einem Zug des Menschen {@code null} ist.
      */
     private Thread machineThread;
+
+    /**
+     * Entspricht einem Flag, ob die momentane Spielsituation durch ein Undo
+     * kreiert wurde. Wird benötigt, um zu wissen, ob Meldungen über das
+     * Aussetzen ausgegeben werden sollen.
+     */
+    private boolean undoWasUsed;
 
     /**
      * Kreiert den Vermittler für die Gui mit den standard Spieleinstellungen
@@ -43,18 +52,19 @@ public final class DisplayData extends Observable {
      * Maschinenzüge abgebrochen werden.
      */
     public void createNewBoard() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         stopMachineThread();
-        setChanged();
         boards = createNewStack(boards.peek().getFirstPlayer());
-        notifyObserver(false);
+        setChanged();
+        notifyObserver();
         machineMove();
     }
 
     /**
      * Führt einen Zug des menschlichen Spielers aus, falls dieser legal ist.
-     * Falls der Zug erfolgreich war, wird die View benachrichtigt.
+     * Falls der Zug erfolgreich war, werden die {@code Observer}
+     * benachrichtigt.
      *
      * @param row                           Entspricht der Zeile in der der
      *                                      Stein gelegt werden soll.
@@ -73,13 +83,13 @@ public final class DisplayData extends Observable {
      * @see                                 Board#move(int, int)
      */
     public boolean move(int row, int col) {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         Board move = boards.peek().move(row, col);
         if (move != null) {
-            setChanged();
             boards.push(move);
-            notifyObserver(true);
+            setChanged();
+            notifyObserver();
             return true;
         }
         return false;
@@ -96,7 +106,7 @@ public final class DisplayData extends Observable {
      * @see                             MachineThread
      */
     public void machineMove() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         if (machineThread == null) {
             if (!isGameOver() && next() == Player.MACHINE) {
@@ -123,7 +133,7 @@ public final class DisplayData extends Observable {
      * @see                                 Board#getSlot(int, int)
      */
     public Player getSlot(int row, int col) {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         return boards.peek().getSlot(row, col);
     }
@@ -139,7 +149,7 @@ public final class DisplayData extends Observable {
      * @see                                 Board#setLevel(int)
      */
     public void setLevel(int level) {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         boards.peek().setLevel(level);
     }
@@ -152,12 +162,12 @@ public final class DisplayData extends Observable {
      * @see         #createNewStack(Player)
      */
     public void switchPlayerOrder() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         stopMachineThread();
-        setChanged();
         boards = createNewStack(boards.peek().getFirstPlayer().inverse());
-        notifyObserver(false);
+        setChanged();
+        notifyObserver();
         machineMove();
     }
 
@@ -173,19 +183,21 @@ public final class DisplayData extends Observable {
      * @see                             #undoIsPossible()
      */
     public void undo() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         if (undoIsPossible()) {
             boolean humanMovePopped = false;
             stopMachineThread();
             do {
-                setChanged();
                 boards.pop();
-                notifyObserver(false);
                 if (next() == Player.HUMAN) {
                     humanMovePopped = true;
                 }
             } while (!humanMovePopped && undoIsPossible());
+            undoWasUsed = true;
+            setChanged();
+            notifyObserver();
+            undoWasUsed = false;
         } else {
             throw new IllegalStateException("Undo is not possible!");
         }
@@ -198,7 +210,7 @@ public final class DisplayData extends Observable {
      *              andernfalls {@code false}.
      */
     public boolean undoIsPossible() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         final int minimumMovesForUndo;
         if (boards.peek().getFirstPlayer() == Player.HUMAN) {
@@ -211,13 +223,25 @@ public final class DisplayData extends Observable {
     }
 
     /**
+     * Gibt zurück, ob Meldungen ausgegeben werden sollen, ob ein Spieler
+     * aussetzen muss, da falls Undo benutzt wurde, die gleichen Meldungen
+     * nicht erneut ausgegeben werden sollen.
+     *
+     * @return      Entspricht {@code true}, falls zuletzt {@link #undo()}
+     *              benutzt wurde.
+     */
+    public boolean isUndoWasUsed() {
+        return undoWasUsed;
+    }
+
+    /**
      * Gibt die Anzahl an Steinen des Menschen zurück.
      *
      * @return      Entspricht der Anzahl der Steine.
      * @see         Board#getNumberOfHumanTiles()
      */
     public int getNumberOfHumanTiles() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         return boards.peek().getNumberOfHumanTiles();
     }
@@ -229,7 +253,7 @@ public final class DisplayData extends Observable {
      * @see         Board#getNumberOfMachineTiles()
      */
     public int getNumberOfMachineTiles() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         return boards.peek().getNumberOfMachineTiles();
     }
@@ -256,7 +280,7 @@ public final class DisplayData extends Observable {
      * @see                                 Board#getWinner()
      */
     public Player getWinner() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         return boards.peek().getWinner();
     }
@@ -268,7 +292,7 @@ public final class DisplayData extends Observable {
      * @see         Board#next()
      */
     public Player next() {
-        assert boards.peek() != null : "Illegal state of DisplayData";
+        assert !boards.empty() : "Illegal state of DisplayData";
 
         return boards.peek().next();
     }
@@ -306,8 +330,8 @@ public final class DisplayData extends Observable {
     }
 
     /**
-     * Kreiert einen neuen {@code Stack<Board>} mit einem neuen Spiel, wobei der
-     * Eröffner gesetzt werden kann.
+     * Kreiert einen neuen {@code Stack<Board>} mit einem neuen Spiel, wobei
+     * der Eröffner gesetzt werden kann.
      *
      * @param firstPlayer       Entspricht dem Eröffner.
      * @return                  Gibt den neuen {@code Stack<Board>} zurück.
@@ -323,24 +347,46 @@ public final class DisplayData extends Observable {
     /**
      * Dieser {@code Thread} berechnet die Züge der Maschine.
      */
-    private class MachineThread extends Thread {
+    private final class MachineThread extends Thread {
 
         /**
          * Führt Maschinenzüge solange aus, bis das Spiel vorbei ist oder die
-         * Maschine nicht mehr an der Reihe ist.
+         * Maschine nicht mehr an der Reihe ist, wobei jeweils gewartet wird,
+         * bis die {@code Observer} vollständig geupdatet wurden.
          *
          * @see         #isGameOver()
          * @see         #next()
+         * @see         #update()
          * @see         Board#machineMove()
          */
         @Override
         public void run() {
             while (!isGameOver() && next() == Player.MACHINE) {
-                setChanged();
                 boards.push(boards.peek().machineMove());
-                notifyObserver(true);
+                update();
             }
             machineThread = null;
+        }
+
+        /**
+         * Benachrichtigt die {@code Observer} und der {@code MachineThread}
+         * wartet, bis diese geupdatet wurden.
+         */
+        private void update() {
+            try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        setChanged();
+                        notifyObserver();
+                    }
+                });
+            } catch (InterruptedException e) {
+                stopMachineThread();
+                machineMove();
+            } catch (InvocationTargetException e) {
+                throw new IllegalStateException("Notifying Observer failed!");
+            }
         }
     }
 }

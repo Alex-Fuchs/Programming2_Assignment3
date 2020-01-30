@@ -38,7 +38,7 @@ import java.awt.event.WindowEvent;
  * Tastenkombinationen zu benutzen. Die Klasse implementiert das Interface
  * {@code Observer}, da diese von {@code DisplayData} geupdatet wird.
  *
- * @version 15.01.20
+ * @version 25.01.20
  * @author -----
  */
 public final class ReversiGui extends JFrame implements Observer {
@@ -71,13 +71,13 @@ public final class ReversiGui extends JFrame implements Observer {
     private ReversiGui(DisplayData displayData) {
         assert displayData != null : "DisplayData cannot be null!";
 
+        displayData.addObserver(this);
+        addWindowListener(displayData);
+
         setLayout(new BorderLayout());
         Container contentPane = getContentPane();
         contentPane.add(new GameBoard(displayData), BorderLayout.CENTER);
         contentPane.add(createMenu(displayData), BorderLayout.SOUTH);
-
-        displayData.addObserver(this);
-        addWindowListener(displayData);
 
         setTitle("Reversi");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -91,16 +91,13 @@ public final class ReversiGui extends JFrame implements Observer {
      *
      * @param o                             Entspricht der Spiellogik, von
      *                                      der Informationen benötigt werden.
-     * @param arg                           Entspricht zusätzlichen
-     *                                      Informationen, die jedoch dieser
-     *                                      {@code Observer} nicht benötigt.
      * @throws IllegalArgumentException     Wird geworfen, falls {@code o} kein
      *                                      Objekt von {@code DisplayData} ist.
      * @see                                 #updateScores(DisplayData)
      * @see                                 #updateUndo(DisplayData)
      */
     @Override
-    public void update(Observable o, Object arg) {
+    public void update(Observable o) {
         if (o instanceof DisplayData) {
             DisplayData displayData = (DisplayData) o;
             updateUndo(displayData);
@@ -169,7 +166,6 @@ public final class ReversiGui extends JFrame implements Observer {
 
         humanScore = createScoreJLabel(Player.HUMAN.getColorOfPlayer());
         machineScore = createScoreJLabel(Player.MACHINE.getColorOfPlayer());
-        updateScores(displayData);
 
         menu.add(humanScore);
         menu.add(createLevelJComboBox(displayData));
@@ -296,7 +292,8 @@ public final class ReversiGui extends JFrame implements Observer {
         assert fontColour != null : "The color for text cannot be null!";
 
         final Font scoreFont = new Font(null, Font.BOLD, 20);
-        JLabel jLabel = new JLabel();
+        final int beginningScore = 2;
+        JLabel jLabel = new JLabel(String.valueOf(beginningScore));
         jLabel.setHorizontalAlignment(SwingConstants.CENTER);
         jLabel.setForeground(fontColour);
         jLabel.setFont(scoreFont);

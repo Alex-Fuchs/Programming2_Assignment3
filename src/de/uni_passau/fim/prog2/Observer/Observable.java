@@ -6,7 +6,7 @@ import java.util.Set;
 /**
  * Entspricht der Klasse {@code Observable} des Design-Patterns Observer.
  *
- * @version 15.01.20
+ * @version 25.01.20
  * @author -----
  */
 public class Observable {
@@ -77,19 +77,16 @@ public class Observable {
 
     /**
      * Benachrichtigt alle registrierten {@code Observer}, dass sich der
-     * Zustand verändert hat und setzt den Zustand auf unverändert, wobei den
-     * {@code Observer} ein zusätzliches {@code Object} mit übergeben wird.
+     * Zustand verändert hat und setzt den Zustand auf unverändert.
      *
-     * @param arg           Entspricht zusätzlichen Informationen, die den
-     *                      {@code Observer} gegeben werden kann.
      * @see                 #hasChanged()
      * @see                 #clearChanged()
-     * @see                 Observer#update(Observable, Object)
+     * @see                 Observer#update(Observable)
      */
-    protected void notifyObserver(Object arg) {
+    protected void notifyObserver() {
         if (hasChanged()) {
             for (Observer o : observers) {
-                o.update(this, arg);
+                o.update(this);
             }
             clearChanged();
         }

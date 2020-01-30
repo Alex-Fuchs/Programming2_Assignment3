@@ -12,7 +12,7 @@ import java.awt.event.MouseAdapter;
  * Implementiert die visuelle Darstellung eines Feldes, auf das ein Stein
  * gesetzt werden kann.
  *
- * @version 15.01.20
+ * @version 25.01.20
  * @author -----
  */
 class Field extends JPanel {
